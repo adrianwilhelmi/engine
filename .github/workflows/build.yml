@@ -15,8 +15,7 @@ jobs:
       - name: Install dependencies
         run: |
           sudo apt update
-          sudo apt install -y \ 
-            build-essential cmake ninja-build \
+          sudo apt install -y build-essential cmake ninja-build git
 
       - name: Build SDL3
         run: |
@@ -55,13 +54,14 @@ jobs:
         env:
           cache-name: cache-sdl
         with:
-          path: C:\SDL3-*
+          path: C:\SDL3
           key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ env.SDL_VERSION }}
+
       - if: ${{ steps.cache-windows-sdl.outputs.cache-hit != 'true' }}
         name: Download SDL if not cached
         run: |
           Invoke-WebRequest "https://github.com/libsdl-org/SDL/releases/download/release-$env:SDL_VERSION/SDL3-$env:SDL_VERSION-win32-x86.zip" -OutFile C:\SDL.zip
-          Expand-Archive C:\SDL.zip -DestinationPath C:\
+          Expand-Archive C:\SDL.zip -DestinationPath C:\SDL3
 
       - name: Configure
         run: |
@@ -69,7 +69,7 @@ jobs:
           cd build
           cmake .. -G "Visual Studio 17 2022" -A x64 `
             -DCMAKE_BUILD_TYPE=Release `
-            -DCMAKE_PREFIX_PATH="C:\SDL3-${env:SDL_VERSION}"
+            -DCMAKE_PREFIX_PATH="C:\SDL3"
 
       - name: Build
         run: |
