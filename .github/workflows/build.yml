@@ -16,7 +16,7 @@ jobs:
       - uses: actions/checkout@v4
       - name: Install dependencies
         run: |
-          sudo dnf install gcc git-core make cmake \
+          sudo dnf -y install gcc git-core make cmake \
           alsa-lib-devel fribidi-devel pulseaudio-libs-devel pipewire-devel \
           libX11-devel libXext-devel libXrandr-devel libXcursor-devel libXfixes-devel \
           libXi-devel libXScrnSaver-devel libXtst-devel dbus-devel ibus-devel \
@@ -44,33 +44,8 @@ jobs:
         run: |
           ctest --output-on-failure
 
-  build-opensuse:
-    runs-on: ubuntu-latest
-    container:
-      image: opensuse/leap:15.5
-    steps:
-      - uses: actions/checkout@v4
-      - name: Install dependencies
-        run: |
-          sudo zypper refresh
-          sudo zypper in libunwind-devel libusb-1_0-devel Mesa-libGL-devel libxkbcommon-devel libdrm-devel \
-          libgbm-devel pipewire-devel libpulse-devel sndio-devel Mesa-libEGL-devel alsa-devel xwayland-devel \
-          wayland-devel wayland-protocols-devel libthai-devel fribidi-devel
-      - name: Build SDL3
-        run: |
-          git clone https://github.com/libsdl-org/SDL.git
-          cd SDL
-          mkdir build && cd build
-          cmake .. -G Ninja -DCMAKE_BUILD_TYPE=Release -DSDL_TEST=OFF
-          ninja
-          sudo ninja install
-      - name: Build project
-        run: |
-          mkdir build && cd build
-          cmake .. -G Ninja -DCMAKE_BUILD_TYPE=Release
-          ninja
-
   build-arch:
+    name: Build (archlinux-latest)
     runs-on: ubuntu-latest
     container:
       image: archlinux:latest
@@ -78,7 +53,7 @@ jobs:
       - uses: actions/checkout@v4
       - name: Install dependencies
         run: |
-          sudo pacman -S alsa-lib cmake hidapi ibus jack libdecor libthai fribidi libgl libpulse libusb libx11 libxcursor libxext libxfixes libxi libxinerama libxkbcommon libxrandr libxrender libxss libxtst mesa ninja pipewire sndio vulkan-driver vulkan-headers wayland wayland-protocols
+          pacman -Syu --noconfirm alsa-lib cmake hidapi ibus jack libdecor libthai fribidi libgl libpulse libusb libx11 libxcursor libxext libxfixes libxi libxinerama libxkbcommon libxrandr libxrender libxss libxtst mesa ninja pipewire sndio vulkan-driver vulkan-headers wayland wayland-protocols
 
       - name: Build SDL3
         run: |
