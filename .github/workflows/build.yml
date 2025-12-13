@@ -16,7 +16,7 @@ jobs:
       - uses: actions/checkout@v4
       - name: Install dependencies
         run: |
-          sudo dnf -y install gcc git-core make cmake \
+          sudo dnf -y install gcc git-core make cmake ninja-build \
           alsa-lib-devel fribidi-devel pulseaudio-libs-devel pipewire-devel \
           libX11-devel libXext-devel libXrandr-devel libXcursor-devel libXfixes-devel \
           libXi-devel libXScrnSaver-devel libXtst-devel dbus-devel ibus-devel \
@@ -43,32 +43,6 @@ jobs:
       - name: Run tests
         run: |
           ctest --output-on-failure
-
-  build-arch:
-    name: Build (archlinux-latest)
-    runs-on: ubuntu-latest
-    container:
-      image: archlinux:latest
-    steps:
-      - uses: actions/checkout@v4
-      - name: Install dependencies
-        run: |
-          pacman -Syu --noconfirm alsa-lib cmake hidapi ibus jack libdecor libthai fribidi libgl libpulse libusb libx11 libxcursor libxext libxfixes libxi libxinerama libxkbcommon libxrandr libxrender libxss libxtst mesa ninja pipewire sndio vulkan-driver vulkan-headers wayland wayland-protocols
-
-      - name: Build SDL3
-        run: |
-          git clone https://github.com/libsdl-org/SDL.git
-          cd SDL
-          mkdir build && cd build
-          cmake .. -G Ninja -DCMAKE_BUILD_TYPE=Release -DSDL_TEST=OFF
-          ninja
-          sudo ninja install
-
-      - name: Build project
-        run: |
-          mkdir build && cd build
-          cmake .. -G Ninja -DCMAKE_BUILD_TYPE=Release
-          ninja
 
   build-ubuntu:
     name: Build (ubuntu-latest)
