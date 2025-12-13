@@ -1,6 +1,7 @@
 #include<string>
 #include<iostream>
 #include<memory>
+#include<cassert>
 
 #include<SDL3/SDL.h>
 
@@ -27,6 +28,8 @@ int main(){
 		SDL_Quit();
 		return 1;
 	}
+
+	assert(pwindow != nullptr);
 
 	bool running = true;
 	SDL_Event e;
