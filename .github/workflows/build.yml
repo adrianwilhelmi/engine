@@ -133,6 +133,8 @@ jobs:
             '--default-answer',
             '--confirm-command', 'install'
           ) -Wait
+        ls C:\VulkanSDK\
+        ls C:\VulkanSDK\$env:VULKAN_VERSION
 
       - name: Configure
         run: |
