@@ -114,6 +114,11 @@ jobs:
           Invoke-WebRequest "https://github.com/libsdl-org/SDL/releases/download/release-$env:SDL_VERSION/SDL3-devel-$env:SDL_VERSION-VC.zip" -OutFile C:\SDL.zip
           Expand-Archive C:\SDL.zip -DestinationPath C:\SDL3
 
+      - name: Setup Vulkan SDK
+        uses: gfx-rs/setup-vulkan@v1
+        with:
+          version: 1.4.335.0
+
       - name: Configure
         run: |
           mkdir build
