@@ -138,7 +138,7 @@ jobs:
         shell: pwsh
         run: |
           Write-Host "Listing VulkanSDK install dir:"
-          Get-ChildItem -Path "C:\VulkanSDK\$env:VULKAN_VERSION" -Recurse -Depth 2 | Select-Object FullName
+          Get-ChildItem -Path "C:" -Recurse -Depth 3 | Select-Object FullName
 
       - name: Export VULKAN_SDK and PATH
         shell: pwsh
