@@ -133,8 +133,12 @@ jobs:
             '--default-answer',
             '--confirm-command', 'install'
           ) -Wait
-        ls C:\VulkanSDK\
-        ls C:\VulkanSDK\$env:VULKAN_VERSION
+
+      - name: Debug VulkanSDK files
+        shell: pwsh
+        run: |
+          Write-Host "Listing VulkanSDK files..."
+          Get-ChildItem "C:\VulkanSDK" -Recurse | Select-Object FullName
 
       - name: Configure
         run: |
