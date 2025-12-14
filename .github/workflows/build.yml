@@ -134,11 +134,18 @@ jobs:
             '--confirm-command', 'install'
           ) -Wait
 
-      - name: Debug VulkanSDK files
+      - name: Debug Vulkan files
         shell: pwsh
         run: |
-          Write-Host "Listing VulkanSDK files..."
-          Get-ChildItem "C:\VulkanSDK" -Recurse | Select-Object FullName
+          Write-Host "Listing VulkanSDK install dir:"
+          Get-ChildItem -Path "C:\VulkanSDK\$env:VULKAN_VERSION" -Recurse -Depth 2 | Select-Object FullName
+
+      - name: Export VULKAN_SDK and PATH
+        shell: pwsh
+        run: |
+          $vpath = "C:\VulkanSDK\$env:VULKAN_VERSION"
+          Add-Content -Path $env:GITHUB_ENV -Value "VULKAN_SDK=$vpath"
+          Add-Content -Path $env:GITHUB_ENV -Value "PATH=$vpath\Bin;${env:PATH}"
 
       - name: Configure
         run: |
@@ -147,8 +154,6 @@ jobs:
           cmake .. -G "Visual Studio 17 2022" -A x64 `
             -DCMAKE_BUILD_TYPE=Release `
             -DCMAKE_PREFIX_PATH="C:\SDL3;C:\VulkanSDK\$env:VULKAN_VERSION" `
-            -DVulkan_INCLUDE_DIR="C:/VulkanSDK/$env:VULKAN_VERSION/Include" `
-            -DVulkan_LIBRARY="C:/VulkanSDK/$env:VULKAN_VERSION/Lib/vulkan-1.lib"
 
       - name: Build
         run: |
