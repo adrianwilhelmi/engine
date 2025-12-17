@@ -127,7 +127,7 @@ jobs:
       - name: Configure
         run: |
           mkdir build
-          cmake .. -G "Ninja" -S . -B build `
+          cmake -G "Ninja" -S . -B build `
             -DCMAKE_BUILD_TYPE=Release `
             -DCMAKE_PREFIX_PATH="C:\SDL3"
 
