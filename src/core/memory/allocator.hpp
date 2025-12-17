@@ -1,65 +1,16 @@
 #pragma once
 
-#include<string>
 #include<cstddef>
 #include<cstdint>
-#include<cstdlib>
 #include<new>
-#include<type_traits>
 #include<utility>
-#include<cassert>
-#include<optional>
+#include<concepts>
 #include<bit>
 
 constexpr std::size_t align_up(const std::size_t size,
 		std::size_t alignment) noexcept{
 	return (size + alignment - 1) & ~(alignment - 1);
 }
-
-#if defined(WIN32) || defined(_WIN64)
-	#include<malloc.h>
-	static inline void* os_aligned_alloc(
-			const std::size_t alignment, 
-			const std::size_t size){
-		return _aligned_malloc(size, alignment);
-	}
-
-	static inline void os_aligned_free(void*p) {_aligned_free(p); }
-
-	std::string detected_os(){
-		return "win";
-	}
-#elif defined(__linux__) || defined(__unix__)
-	static inline void* os_aligned_alloc(
-			std::size_t alignment, 
-			const std::size_t size){
-		void*ptr = nullptr;
-		if(alignment < sizeof(void*)) alignment = sizeof(void*);
-		int r = posix_memalign(&ptr, alignment, align_up(size, alignment));
-		return r == 0 ? ptr : nullptr;
-	}
-
-	static inline void os_aligned_free(void*p) { std::free(p); }
-
-	std::string detected_os(){
-		return "lin";
-	}
-#else
-	static inline void* os_aligned_alloc(
-			std::size_t alignment, 
-			std::size_t size){ 
-		std::size_t s = size; 
-		if(s % alignment != 0){ 
-			s = ((s + alignment - 1) / alignment) * alignment; 
-		} 
-		return std::aligned_alloc(alignment, s); } 
-
-	static inline void os_aligned_free(void*p) { std::free(p); }
-
-	std::string detected_os(){
-		return "other";
-	}
-#endif
 
 template<typename T>
 concept AllocatorLike = requires(
@@ -79,79 +30,31 @@ concept PoolLike = AllocatorLike<T> && requires(T& p) {
 };
 
 struct DefaultHeap{
-	DefaultHeap() noexcept = default;
 	std::size_t allocs_ = 0;
+
+	DefaultHeap() noexcept = default;
 
 	void* allocate(
 			const std::size_t size,
-			const std::size_t alignment = alignof(std::max_align_t)) noexcept{
-		void*p = os_aligned_alloc(alignment, size);
-		if(p) ++allocs_;
-		return p;
-	}
-
-	void deallocate(void* p) noexcept{
-		os_aligned_free(p);
-	}
+			const std::size_t alignment = alignof(std::max_align_t)) noexcept;
+	void deallocate(void* p) noexcept;
 };
 static_assert(AllocatorLike<DefaultHeap>);
 
-
 class LinearArena{
 public:
-	LinearArena(void* external_buffer, const std::size_t bytes) noexcept
-			: buffer_(static_cast<std::byte*>(external_buffer)), 
-			capacity_(bytes),
-			offset_(0),
-			owns_memory_(false)
-		{}
-
-	explicit LinearArena(const std::size_t bytes) noexcept
-			: capacity_(bytes), offset_(0), owns_memory_(true){
-		buffer_ = static_cast<std::byte*>(DefaultHeap{}.allocate(bytes));
-	}
-
-	~LinearArena() noexcept{
-		if(owns_memory_ && buffer_) DefaultHeap{}.deallocate(buffer_);
-	}
+	LinearArena(void* external_buffer, const std::size_t bytes) noexcept;
+	explicit LinearArena(const std::size_t bytes) noexcept;
+	~LinearArena() noexcept;
 
 	LinearArena(const LinearArena&) = delete;
 	LinearArena& operator=(const LinearArena&) = delete;
-	LinearArena(LinearArena&& other) noexcept
-			: buffer_(other.buffer_), 
-			capacity_(other.capacity_), 
-			offset_(other.offset_),
-			owns_memory_(other.owns_memory_){
-		other.buffer_ = nullptr;
-		other.owns_memory_ = false;
-	}
+	LinearArena(LinearArena&& other) noexcept;
+	LinearArena& operator=(LinearArena&& other) = delete;
 
-	void* allocate(
-			const std::size_t size, 
-			const std::size_t alignment = alignof(std::max_align_t)) noexcept{
-		if(!buffer_) return nullptr;
-
-		std::uintptr_t base = reinterpret_cast<std::uintptr_t>(buffer_);
-		std::uintptr_t cur_ptr = base + offset_;
-
-		const std::size_t mask = alignment - 1;
-		std::size_t padding = 0;
-		if(cur_ptr & mask){
-			padding = alignment - (cur_ptr & mask);
-		}
-
-		if(offset_ + padding + size > capacity_) return nullptr;
-
-		offset_ += padding;
-		void*result = buffer_ + offset_;
-		offset_ += size;
-
-		return result;
-	}
-
-	inline void reset() noexcept {offset_ = 0; }
-
-	std::size_t in_use() const {return offset_;}
+	void* allocate(const std::size_t size, const std::size_t alignment = alignof(std::max_align_t)) noexcept;
+	void reset() noexcept;
+	std::size_t in_use() const;
 
 private:
 	std::byte* buffer_ = nullptr;
@@ -161,69 +64,25 @@ private:
 };
 static_assert(ArenaLike<LinearArena>);
 
-
 class PoolAllocator{
 public:
 	PoolAllocator(void* buf,
 				const std::size_t elem_size, 
 				const std::size_t count, 
-				std::size_t alignment = alignof(std::max_align_t))
-			: memory_(static_cast<std::byte*>(buf)), 
-			elem_size_((elem_size + sizeof(void*) - 1) & ~(sizeof(void*) - 1)),
-			capacity_count_(count){
-		assert(alignment >= alignof(void*) && 
-				"alignment must be at least pointer size");
-		const std::size_t min_size = (elem_size > sizeof(void*)) ? 
-			elem_size : sizeof(void*);
-		elem_size_ = align_up(min_size, alignment);
-
-		init_free_list();
-	}
-
+				std::size_t alignment = alignof(std::max_align_t));
 	PoolAllocator(const PoolAllocator&) = delete;
 
-	void init_free_list() noexcept{
-		if(!memory_) { free_head_ = nullptr; return; }
-		free_head_ = memory_;
-		std::byte* ptr = memory_;
-		for(std::size_t i = 0; i < capacity_count_ - 1; ++i){
-			void* next = ptr + elem_size_;
-			*reinterpret_cast<void**>(ptr) = next;
-			ptr += elem_size_;
-		}
-		*reinterpret_cast<void**>(ptr) = nullptr;
-	}
 
-	void* allocate(
-			const std::size_t size, 
-			const std::size_t align){
-		assert(size <= elem_size_ && "object too large for this pool");
-		assert(align <= alignment_ && "too strict alignment required");
+	void* allocate(const std::size_t size, const std::size_t align);
+	void deallocate(void* p) noexcept;
+	void reset() noexcept;
 
-		if(!free_head_) return nullptr;
-
-		void*r = free_head_;
-		free_head_ = *reinterpret_cast<void**>(free_head_);
-		return r;
-	}
-
-	void deallocate(void* p) noexcept{
-		if(!p) return;
-		*reinterpret_cast<void**>(p) = free_head_;
-		free_head_ = p;
-	}
-
-	inline void reset() noexcept { init_free_list(); }
-
-	inline std::size_t capacity() const noexcept {return capacity_count_;}
-	inline std::size_t free_count() const noexcept{
-		std::size_t cnt = 0;
-		void* cur = free_head_;
-		while(cur) {++cnt; cur = *reinterpret_cast<void**>(cur);}
-		return cnt;
-	}
+	std::size_t capacity() const noexcept {return capacity_count_;}
+	std::size_t free_count() const noexcept;
 
 private:
+	void init_free_list() noexcept;
+
 	std::byte* memory_ = nullptr;
 	void* free_head_ = nullptr;
 	std::size_t elem_size_ = 0;
@@ -299,11 +158,11 @@ struct AllocatorHandle{
 	}
 
 	void deallocate(void* ptr) const{
-		if(can_free) free_fn(impl, ptr);
+		if(can_free && free_fn) free_fn(impl, ptr);
 	}
 
 	void reset() const{
-		if(can_reset) reset_fn(impl);
+		if(can_reset && reset_fn) reset_fn(impl);
 	}
 };
 

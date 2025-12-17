@@ -1,5 +1,6 @@
 add_library(EngineCore STATIC
 	core/memory/allocator.hpp
+	core/memory/allocator.cpp
 )
 
 set_target_properties(EngineCore PROPERTIES LINKER_LANGUAGE CXX)
