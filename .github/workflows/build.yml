@@ -99,6 +99,8 @@ jobs:
           submodules:
             true
 
+      - uses: ilammy/msvc-dev-cmd@v1
+
       - name: Cache SDL
         id: cache-windows-sdl
         uses: actions/cache@v3
@@ -124,11 +126,11 @@ jobs:
 
       - name: Configure
         run: |
+          choco install ninja
           mkdir build
-          cd build
-          cmake .. -G "Visual Studio 17 2022" -A x64 `
+          cmake .. -G "Ninja" -S .-B build `
             -DCMAKE_BUILD_TYPE=Release `
-            -DCMAKE_PREFIX_PATH="C:\SDL3;$VULKAN_SDK"
+            -DCMAKE_PREFIX_PATH="C:/SDL"
 
       - name: Build
         run: |
