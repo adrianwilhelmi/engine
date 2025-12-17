@@ -126,11 +126,10 @@ jobs:
 
       - name: Configure
         run: |
-          choco install ninja
           mkdir build
-          cmake .. -G "Ninja" -S .-B build `
+          cmake .. -G "Ninja" -S . -B build `
             -DCMAKE_BUILD_TYPE=Release `
-            -DCMAKE_PREFIX_PATH="C:/SDL"
+            -DCMAKE_PREFIX_PATH="C:\SDL3"
 
       - name: Build
         run: |
