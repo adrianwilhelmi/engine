@@ -164,11 +164,11 @@ struct AllocatorHandle{
 	}
 };
 
-template<typename T>
-T* alloc_new(AllocatorHandle& a){
+template<typename T, typename ...Args>
+T* alloc_new(AllocatorHandle& a, Args&&... args){
 	void* mem = a.allocate(sizeof(T), alignof(T));
 	if(!mem) throw std::bad_alloc();
-	return new (mem) T();
+	return new (mem) T(std::forward<Args>(args)...);
 }
 
 template<typename T>
