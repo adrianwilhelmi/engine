@@ -1,7 +1,6 @@
 #include<cstring>
 
 #include<core/memory/allocator.hpp>
-//#include<../src/core/memory/allocator.hpp>
 
 #include<gtest/gtest.h>
 
@@ -30,11 +29,9 @@ TEST(LinearArenaTest, BasicAllocReset){
 	void*b = arena.allocate(32, alignof(std::max_align_t));
 	EXPECT_NE(b, nullptr);
 	EXPECT_NE(a, b);
+	EXPECT_LT(a, b);
 
 	EXPECT_GE(arena.in_use(), 16 + 32);
-
-	void* big = arena.allocate(buff_size, alignof(std::max_align_t));
-	EXPECT_EQ(big, nullptr);
 
 	arena.reset();
 
@@ -62,4 +59,70 @@ TEST(LinearArenaTest, LinearArenaWithHeap){
 	EXPECT_EQ(a1.in_use(), 0);
 	EXPECT_EQ(a2.in_use(), 0);
 	EXPECT_EQ(heap.allocs_, 1);
+}
+
+TEST(LinearArenaTest, RespectsAlignment){
+	LinearArena arena(1024);
+	arena.allocate(1);
+
+	void*p = arena.allocate(100,64);
+	ASSERT_NE(p,nullptr);
+	std::uintptr_t addr = reinterpret_cast<std::uintptr_t>(p);
+	EXPECT_EQ(addr % 64, 0);
+}
+
+TEST(LinearArenaTest, ReturnsNullOnOOM){
+	LinearArena arena(100);
+	void*p = arena.allocate(200);
+	EXPECT_EQ(p,nullptr);
+}
+
+TEST(PoolAllocatorTest, ReusesMemory){
+	std::byte buffer[200];
+	PoolAllocator pool(buffer, 32, 2);
+
+	void* p1 = pool.allocate(32,8);
+	void* p2 = pool.allocate(32,8);
+	void* p3 = pool.allocate(32,8);
+
+	ASSERT_NE(p1,nullptr);
+	ASSERT_NE(p2,nullptr);
+	EXPECT_EQ(p3,nullptr);
+	EXPECT_EQ(pool.free_count(),0);
+
+	pool.deallocate(p1);
+	EXPECT_EQ(pool.free_count(), 1);
+
+	void*p4 = pool.allocate(32, 8);
+	EXPECT_EQ(p4,p1);
+}
+
+struct SpyObject{
+	static int constructions;
+	static int destructions;
+	int value;
+
+	SpyObject() : value(0) { constructions++; }
+	SpyObject(int v) : value(v) { constructions++;}
+	~SpyObject() {destructions++;}
+};
+
+int SpyObject::constructions = 0;
+int SpyObject::destructions = 0;
+
+TEST(AllocatorHandleTest, CallsConstructorAndDestructors){
+	SpyObject::constructions = 0;
+	SpyObject::destructions = 0;
+
+	LinearArena arena(1024);
+	auto handle = AllocatorHandle::from_arena(arena);
+
+	SpyObject* obj = alloc_new<SpyObject>(handle);
+	ASSERT_NE(obj, nullptr);
+	EXPECT_EQ(SpyObject::constructions, 1);
+	EXPECT_EQ(SpyObject::destructions, 0);
+
+	free_delete(handle, obj);
+	EXPECT_EQ(SpyObject::constructions, 1);
+	EXPECT_EQ(SpyObject::destructions, 1);
 }

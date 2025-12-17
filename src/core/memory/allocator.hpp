@@ -101,10 +101,8 @@ struct AllocatorHandle{
 	bool can_free = false;
 	bool can_reset = false;
 
-	AllocatorHandle() noexcept = default;
-
 	template<typename T>
-	static AllocatorHandle fromHeap(T& allocator){
+	static AllocatorHandle from_heap(T& allocator){
 		return AllocatorHandle{
 			&allocator,
 			[](void*i, const std::size_t s,const std::size_t a){
@@ -120,7 +118,7 @@ struct AllocatorHandle{
 	}
 
 	template<typename T>
-	static AllocatorHandle fromArena(T& allocator){
+	static AllocatorHandle from_arena(T& allocator){
 		return AllocatorHandle{
 			&allocator,
 			[](void* i, const std::size_t s,const std::size_t a){
@@ -136,7 +134,7 @@ struct AllocatorHandle{
 	}
 
 	template<typename T>
-	static AllocatorHandle fromPool(T& allocator){
+	static AllocatorHandle from_pool(T& allocator){
 		return AllocatorHandle{
 			&allocator,
 			[](void* i, const std::size_t s,const std::size_t a){
