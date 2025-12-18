@@ -7,6 +7,8 @@
 #include<concepts>
 #include<bit>
 
+namespace engine::allocator{
+
 constexpr std::size_t align_up(const std::size_t size,
 		std::size_t alignment) noexcept{
 	return (size + alignment - 1) & ~(alignment - 1);
@@ -177,3 +179,5 @@ void free_delete(AllocatorHandle& a, T* obj) noexcept{
 	obj->~T();
 	a.deallocate(static_cast<void*>(obj));
 }
+
+} // namespace engine::allocator

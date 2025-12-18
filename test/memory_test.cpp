@@ -4,6 +4,8 @@
 
 #include<gtest/gtest.h>
 
+using namespace engine::allocator;
+
 TEST(DefaultHeapTest, BasicAllocDealloc){
 	const std::size_t maxa = alignof(std::max_align_t);
 	const std::size_t buff_size = 1024;
@@ -123,6 +125,17 @@ TEST(LinearArenaTest, PointerOrderingViaUIntptr){
 			reinterpret_cast<std::uintptr_t>(p2));
 }
 
+TEST(LinearArenaTest, ExactCapacityUsage){
+	LinearArena arena(100);
+
+	void*p1 = arena.allocate(100,1);
+	EXPECT_NE(p1,nullptr);
+	EXPECT_EQ(arena.in_use(), 100);
+
+	void*p2 = arena.allocate(1,1);
+	EXPECT_EQ(p2,nullptr);
+}
+
 TEST(PoolAllocatorTest, ReusesMemory){
 	std::byte buffer[200];
 	PoolAllocator pool(buffer, 32, 2);
@@ -199,6 +212,25 @@ TEST(PoolAllocatorTest, Stress2){
 		ASSERT_NE(p,nullptr);
 		ptrs[i] = p;
 	}
+}
+
+TEST(PoolAllocatorTest, CorrectStridingWithAlignment){
+	std::byte buffer[100];
+	PoolAllocator pool(buffer,10,2,16);
+	void*p1 = pool.allocate(10, 16);
+	void*p2 = pool.allocate(10, 16);
+
+	ASSERT_NE(p1, nullptr);
+	ASSERT_NE(p2, nullptr);
+
+	std::uintptr_t addr1 = reinterpret_cast<std::uintptr_t>(p1);
+	std::uintptr_t addr2 = reinterpret_cast<std::uintptr_t>(p2);
+
+	std::size_t distance = (addr2 > addr1) ? 
+			(addr2 - addr1) : (addr1 - addr2);
+
+	EXPECT_GE(distance,16u);
+	EXPECT_EQ(distance % 16, 0u);
 }
 
 struct SpyObject{

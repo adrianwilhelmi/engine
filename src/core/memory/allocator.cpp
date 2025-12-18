@@ -5,6 +5,8 @@
 
 #include"allocator.hpp"
 
+namespace engine::allocator{
+
 #if defined(WIN32) || defined(_WIN64)
 	#include<malloc.h>
 	static inline void* os_aligned_alloc(
@@ -168,3 +170,5 @@ std::size_t PoolAllocator::free_count() const noexcept{
 	while(cur) {++cnt; cur = *reinterpret_cast<void**>(cur);}
 	return cnt;
 }
+
+} // namespace engine::allocator
