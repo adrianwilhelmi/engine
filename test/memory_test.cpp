@@ -1,10 +1,17 @@
 #include<cstring>
+#include<vector>
+#include<algorithm>
+#include<gtest/gtest.h>
 
-#include<core/memory/allocator.hpp>
+#include<core/memory/deafult_heap.hpp>
+#include<core/memory/linear_arena.hpp>
+#include<core/memory/pool_allocator.hpp>
+#include<core/memory/page_allocator.hpp>
+#include<core/memory/allocator_handle.hpp>
 
 #include<gtest/gtest.h>
 
-using namespace engine::allocator;
+using namespace engine::mem::allocator;
 
 TEST(DefaultHeapTest, BasicAllocDealloc){
 	const std::size_t maxa = alignof(std::max_align_t);
@@ -79,7 +86,10 @@ TEST(LinearArenaTest, LinearArenaWithHeap){
 }
 
 TEST(LinearArenaTest, RespectsAlignment){
-	LinearArena arena(1024);
+	PageAllocator backing;
+	backing.init(4096);
+
+	LinearArena arena(backing, 1024);
 	arena.allocate(1);
 
 	void*p = arena.allocate(100,64);
@@ -89,7 +99,10 @@ TEST(LinearArenaTest, RespectsAlignment){
 }
 
 TEST(LinearArenaTest, ReturnsNullOnOOM){
-	LinearArena arena(100);
+	PageAllocator backing;
+	backing.init(4096);
+
+	LinearArena arena(backing, 100);
 	void*p = arena.allocate(200);
 	EXPECT_EQ(p,nullptr);
 }
@@ -116,7 +129,10 @@ TEST(LinearArenaTest, ReuseAfterReset){
 }
 
 TEST(LinearArenaTest, PointerOrderingViaUIntptr){
-	LinearArena arena(512);
+	PageAllocator backing;
+	backing.init(4096);
+
+	LinearArena arena(backing, 512);
 	void*p1 = arena.allocate(8);
 	void*p2 = arena.allocate(8);
 	ASSERT_NE(p1,nullptr);
@@ -126,7 +142,10 @@ TEST(LinearArenaTest, PointerOrderingViaUIntptr){
 }
 
 TEST(LinearArenaTest, ExactCapacityUsage){
-	LinearArena arena(100);
+	PageAllocator backing;
+	backing.init(4096);
+
+	LinearArena arena(backing, 100);
 
 	void*p1 = arena.allocate(100,1);
 	EXPECT_NE(p1,nullptr);
@@ -137,8 +156,11 @@ TEST(LinearArenaTest, ExactCapacityUsage){
 }
 
 TEST(PoolAllocatorTest, ReusesMemory){
-	std::byte buffer[200];
-	PoolAllocator pool(buffer, 32, 2);
+	PageAllocator backing;
+	backing.init(4096);
+
+	// elem_size = 32, count=2
+	PoolAllocator pool(backing, 32, 2);
 
 	void* p1 = pool.allocate(32,8);
 	void* p2 = pool.allocate(32,8);
@@ -157,10 +179,12 @@ TEST(PoolAllocatorTest, ReusesMemory){
 }
 
 TEST(PoolAllocatorTest, ResetRestoresPool){
-	std::byte buf[256];
+	PageAllocator backing;
+	backing.init(4096);
+
 	const std::size_t elem = 32;
 	const std::size_t count = 8;
-	PoolAllocator pool(buf, elem, count);
+	PoolAllocator pool(backing, elem, count);
 
 	for(std::size_t i = 0; i < count; ++i){
 		void*p = pool.allocate(elem, 1);
@@ -173,9 +197,11 @@ TEST(PoolAllocatorTest, ResetRestoresPool){
 }
 
 TEST(PoolAllocatorTest, Stress){
+	PageAllocator backing;
+	backing.init(1000*64);
+
 	const std::size_t count = 1000;
-	std::vector<std::byte> buf(count*32);
-	PoolAllocator pool(buf.data(), 32, count);
+	PoolAllocator pool(backing, 32, count);
 	std::vector<void*> items;
 	items.reserve(count);
 	for(std::size_t i = 0; i < count; ++i){
@@ -189,9 +215,11 @@ TEST(PoolAllocatorTest, Stress){
 }
 
 TEST(PoolAllocatorTest, Stress2){
+	PageAllocator backing;
+
 	constexpr int pool_size = 100;
-	std::vector<std::byte> buffer(pool_size * 64 + 1000);
-	PoolAllocator pool(buffer.data(), 64, pool_size);
+	backing.init(pool_size * 128);
+	PoolAllocator pool(backing, 64, pool_size);
 
 	std::vector<void*> ptrs;
 	ptrs.reserve(pool_size);
@@ -215,8 +243,10 @@ TEST(PoolAllocatorTest, Stress2){
 }
 
 TEST(PoolAllocatorTest, CorrectStridingWithAlignment){
-	std::byte buffer[100];
-	PoolAllocator pool(buffer,10,2,16);
+	PageAllocator backing;
+	backing.init(4096);
+
+	PoolAllocator pool(backing,10,2,16);
 	void*p1 = pool.allocate(10, 16);
 	void*p2 = pool.allocate(10, 16);
 
@@ -251,7 +281,9 @@ TEST(AllocatorHandleTest, CallsConstructorAndDestructors){
 	SpyObject::constructions = 0;
 	SpyObject::destructions = 0;
 
-	LinearArena arena(1024);
+	PageAllocator backing;
+	backing.init(4096);
+	LinearArena arena(backing, 1024);
 	auto handle = AllocatorHandle::from_arena(arena);
 
 	SpyObject* obj = alloc_new<SpyObject>(handle);
@@ -271,7 +303,9 @@ struct Entity{
 };
 
 TEST(AllocatorHandleTest, ForwardsArguments){
-	LinearArena arena(1024);
+	PageAllocator backing;
+	backing.init(4096);
+	LinearArena arena(backing, 1024);
 	auto handle = AllocatorHandle::from_arena(arena);
 
 	Entity* e = alloc_new<Entity>(handle, 10, 20);
