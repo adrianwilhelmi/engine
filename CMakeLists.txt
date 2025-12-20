@@ -1,3 +1,6 @@
+option(ENGINE_BUILD_TESTS "Build unit tests" ON)
+
+
 cmake_minimum_required(VERSION 3.25)
 project(Engine LANGUAGES CXX)
 
@@ -40,17 +43,23 @@ endif()
 find_package(SDL3 REQUIRED)
 find_package(Vulkan REQUIRED)
 
-include(FetchContent)
-FetchContent_Declare(
-	googletest
-	URL https://github.com/google/googletest/archive/refs/heads/main.zip
-)
-set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
-FetchContent_MakeAvailable(googletest)
-
 add_subdirectory(src)
 
-enable_testing()
-add_subdirectory(test)
+if(ENGINE_BUILD_TESTS)
+	message(STATUS "Tests are ENABLED.")
+
+	include(FetchContent)
+	FetchContent_Declare(
+		googletest
+		URL https://github.com/google/googletest/archive/refs/heads/main.zip
+	)
+	set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
+	FetchContent_MakeAvailable(googletest)
+
+	enable_testing()
+	add_subdirectory(test)
+else()
+	message(STATUS "Tests are DISABLED.")
+endif()
 
 add_subdirectory(app)

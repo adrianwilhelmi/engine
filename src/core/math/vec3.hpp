@@ -10,8 +10,21 @@ namespace engine::math{
 struct alignas(16) Vec3{
 	union{
 		simd::Register reg;
-		struct{ float x, y, z, _padding};
-	}
+
+		#pragma pack(push,1)
+
+		#if defined(__GNUC__) || defined(__clang__)
+			#pragma GCC diagnostic push
+			#pragma GCC diagnostic ignored "-Wpedantic"
+		#endif
+
+		struct{ float x, y, z, _padding; };
+		#pragma pack(pop)
+
+		#if defined(__GNUC__) || defined(__clang__)
+			#pragma GCC diagnostic pop
+		#endif
+	};
 
 	FORCE_INLINE Vec3(){
 		reg = simd::set(0,0,0,0);
@@ -65,7 +78,7 @@ struct alignas(16) Vec3{
 		return *this;
 	}
 
-	FORCE_INLINE Vec3& operator*=(const scalar){
+	FORCE_INLINE Vec3& operator*=(const float scalar){
 		reg = simd::mul(reg, scalar);
 		return *this;
 	}
@@ -79,7 +92,7 @@ struct alignas(16) Vec3{
 	}
 
 	[[nodiscard]] FORCE_INLINE float l2() const{
-		return std::sqrt(simd::dot(reg, reg));
+		return std::sqrt(simd::dot3(reg, reg));
 	}
 
 	[[nodiscard]] FORCE_INLINE float length_sq() const{
@@ -95,14 +108,14 @@ struct alignas(16) Vec3{
 	}
 
 	[[nodiscard]] FORCE_INLINE Vec3 abs() const{
-		return simd::abs(reg);
+		return Vec3{simd::abs(reg)};
 	}
 
 	FORCE_INLINE bool operator==(const Vec3& other) const{
 		return simd::equals_xyz(reg, other.reg);
 	}
 
-	FORCE_INLINE bool operator!=(const Vec3 other) const{
+	FORCE_INLINE bool operator!=(const Vec3& other) const{
 		return !simd::equals_xyz(reg,other.reg);
 	}
 
@@ -121,8 +134,15 @@ struct alignas(16) Vec3{
 	}
 };
 
+static_assert(sizeof(Vec3) == 16, "Vec3 size must be exactly 16 byes");
+static_assert(alignof(Vec3) == 16, "Vec3 alignment must be 16 byes");
+static_assert(offsetof(Vec3,Vec3::x) == 0, "Vec3::x must be at offset 0");
+static_assert(offsetof(Vec3,Vec3::reg) == 0, "Vec3::reg must be at offset 0");
+static_assert(offsetof(Vec3,Vec3::y) == sizeof(float), "Vec3: Gap between x and y");
+static_assert(offsetof(Vec3,Vec3::z) == 2*sizeof(float), "Vec3: Gap between y and z");
+
 inline std::ostream& operator<<(std::ostream& os, const Vec3& v){
-	os << "Vec3(" << v.x << ", " << v.y << ", " v.z << ")";
+	os << "Vec3(" << v.x << ", " << v.y << ", " << v.z << ")";
 	return os;
 }
 

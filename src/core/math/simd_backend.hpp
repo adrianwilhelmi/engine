@@ -3,28 +3,31 @@
 #include<cmath>
 #include<utility>
 #include<string>
+#include<algorithm>
 
-#if defined(__AVX__) || defined(__SSE4_1__) || defined(_M_AMD64) || defined(_M_X64)
+#if defined(__AVX2__)
+	// use SSE anyways, __m256 not needed
+	#define ENGINE_SIMD_SSE
+	#define ENGINE_SIMD_AVX
+	#include<immintrin.h>
+
+	#if defined(__FMA__)
+		#define ENGINE_SIMD_FMA
+	#endif
+
+#elif defined(__AVX__) || defined(__SSE4_1__) || defined(_M_AMD64) || defined(_M_X64)
 	#define ENGINE_SIMD_SSE
 	#include<immintrin.h>
-	std::string detected_arch(){
-		return "sse";
-	}
+
 #elif defined(__ARM_NEON) || defined(__ARM_NEON__) || defined(__aarch64__)
 	#define ENGINE_SIMD_NEON
 	#include<arm_neon.h>
-	std::string detected_arch(){
-		return "neon";
-	}
 #else
 	#define ENGINE_SIMD_NONE
 	//fallback
-	std::string detected_arch(){
-		return "other";
-	}
 #endif
 
-namespace engine::math:simd{
+namespace engine::math::simd{
 
 #ifdef ENGINE_SIMD_SSE
 	using Register = __m128;
@@ -35,6 +38,18 @@ namespace engine::math:simd{
 #endif
 
 #define FORCE_INLINE __attribute__((always_inline)) inline
+
+[[nodiscard]] FORCE_INLINE std::string detected_arch(){
+	#ifdef ENGINE_SIMD_AVX
+		return "avx2";
+	#elif ENGINE_SIMD_SSE
+		return "sse";
+	#elif ENGINE_SIMD_NEON
+		return "neon";
+	#else
+		return "other";
+	#endif
+}
 
 [[nodiscard]] FORCE_INLINE Register set(float x, float y, float z, float w = 0.0f){
 	#ifdef ENGINE_SIMD_SSE
@@ -111,6 +126,16 @@ namespace engine::math:simd{
 	#endif
 }
 
+[[nodiscard]] FORCE_INLINE Register fmadd(Register a, Register b, Register c){
+	#if defined(ENGINE_SIMD_FMA) && defined(ENGINE_SIMD_SSE)
+		return _mm_fmadd_ps(a,b,c);
+	#elif defined(ENGINE_SIMD_NEON) && defined(__aarch64__)
+		return vfmaq_f32(c,a,b);
+	#else
+		return add(mul(a,b),c);
+	#endif
+}
+
 [[nodiscard]] FORCE_INLINE Register mul(Register a, Register b){
 	#ifdef ENGINE_SIMD_SSE
 		return _mm_mul_ps(a,b);
@@ -168,7 +193,7 @@ namespace engine::math:simd{
 
 [[nodiscard]] FORCE_INLINE float dot3(Register a, Register b){
 	#ifdef ENGINE_SIMD_SSE
-		return _mm_cvtss_f32(_mm_dp_ps(a,b,0x71));
+		return _mm_cvtss_f32(_mm_dp_ps(a,b,0x17));
 	#elif ENGINE_SIMD_NEON
 		float32x4_t mul_res = vmulq_f32(a,b);
 		mul_res = vsetq_lane_f32(0.0f,mul_res,3);
@@ -178,10 +203,10 @@ namespace engine::math:simd{
 	#endif
 }
 
-[[nodiscard]] FORCE_INLINE float dot3_splat(Register a, Register b){
-	//returns [dot, dot, dot ,dot]
+[[nodiscard]] FORCE_INLINE Register dot3_splat(Register a, Register b){
+	//returns [dot, dot, dot, _]
 	#ifdef ENGINE_SIMD_SSE
-		return _mm_dp_ps(a,b,0x7F);
+		return _mm_dp_ps(a,b,0xF7);
 	#elif ENGINE_SIMD_NEON
 		float d = dot3(a,b);
 		return vdupq_n_f32(d);
@@ -191,6 +216,30 @@ namespace engine::math:simd{
 	#endif
 }
 
+[[nodiscard]] FORCE_INLINE float dot4(Register a, Register b){
+	#ifdef ENGINE_SIMD_SSE
+		// _mm_dp_ps needs SSE4.1
+		return _mm_cvtss_f32(_mm_dp_ps(a,b,0xFF));
+	#elif ENGINE_SIMD_NEON
+		float32x4_t mul_res = vmulq_f32(a,b);
+		return vaddvq_f32(mul_res);
+	#else
+		return a.f[0]*b.f[0] + a.f[1]*b.f[1] + a.f[2] * b.f[2] + a.f[3]*b.f[3];
+	#endif
+}
+
+[[nodiscard]] FORCE_INLINE Register dot4_splat(Register a, Register b){
+	//returns [dot, dot, dot, dot]
+	#ifdef ENGINE_SIMD_SSE
+		return _mm_dp_ps(a,b,0xFF);
+	#elif ENGINE_SIMD_NEON
+		float d = dot4(a,b);
+		return vdupq_n_f32(d);
+	#else
+		float d =  a.f[0]*b.f[0] + a.f[1]*b.f[1] + a.f[2] * b.f[2] + a.f[3]*b.f[3];
+		return {d,d,d,d};
+	#endif
+}
 
 [[nodiscard]] FORCE_INLINE Register cross3(Register a, Register b){
 	#ifdef ENGINE_SIMD_SSE
@@ -204,15 +253,29 @@ namespace engine::math:simd{
 		__m128 term2 = _mm_mul_ps(a_zxy, b_yzx);
 
 		return _mm_sub_ps(term1, term2);
-
+	
 	#elif ENGINE_SIMD_NEON
-		float32x4_t a_yzx = vextq_f32(a,a,1);
-		float32x4_t b_yzx = vextq_f32(b,b,1);
+		#if defined(__clang__) || defined(__GNUC__)
+			float32x4_t a_yzx = __builtin_shufflevector(a,a,1,2,0,3);
+			float32x4_t b_yzx = __builtin_shufflevector(b,b,1,2,0,3);
 
-		float32x4_t a_zxy = vextq_f32(a,a,2);
-		float32x4_t b_zxy = vextq_f32(b,b,2);
+			float32x4_t a_zxy = __builtin_shufflevector(a,a,2,0,1,3);
+			float32x4_t b_zxy = __builtin_shufflevector(b,b,2,0,1,3);
 
-		return vsubq_f32(vmulq_f32(a_yzx, b_zxy),vmulq_f32(a_zxy, b_yzx));
+			return vsubq_f32(vmulq_f32(a_yzx, b_zxy), vmulq_f32(a_zxy,b_yzx));
+		#else
+			float res[4];
+			float A[4],B[4];
+			vst1q_f32(A,a);
+			vst1q_f32(B,b);
+
+			res[0] = A[1]*B[2] - A[2]*B[1];
+			res[1] = A[2]*B[0] - A[0]*B[2];
+			res[2] = A[0]*B[1] - A[1]*B[0];
+			res[3] = 0.0f;
+
+			return vld1q_f32(res);
+		#endif
 
 	#else
 		return{
@@ -301,6 +364,5 @@ namespace engine::math:simd{
 			&& diff.f[2] < eps;
 	#endif
 }
-
 
 } // namespace engine::math::simd

@@ -12,7 +12,26 @@ add_library(EngineCore STATIC
 	core/memory/page_allocator.cpp
 	core/memory/pool_allocator.cpp
 	core/memory/virtual_memory.cpp
+
+
+	core/math/vec3.hpp
+	core/math/vec3packed.hpp
+	core/math/vec4.hpp
 )
+
+if(MSVC)
+	target_compile_options(EngineCore PUBLIC /arch:AVX2)
+	message(STATUS "SIMD: MSVC detected, enabling /arch:AVX2")
+else()
+	if(CMAKE_SYSTEM_PROCESSOR MATCHES "x86_64|amd64|AMD64")
+		target_compile_options(EngineCore PUBLIC -mavx2 -mfma)
+		message(STATUS "SIMD: x86_64 detected, enabling -mavx2 -mfma")
+	elseif(CMAKE_SYSTEM_PROCESSOR MATCHES "aarch64|arm64")
+		message(STATUS "SIMD: ARM64 detected, using default NEON support")
+	else()
+		message(WARNING "SIMD: Unknown processor architecture. Using default compiler")
+	endif()
+endif()
 
 set_target_properties(EngineCore PROPERTIES LINKER_LANGUAGE CXX)
 
