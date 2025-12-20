@@ -198,7 +198,7 @@ namespace engine::math::simd{
 
 [[nodiscard]] FORCE_INLINE float dot3(Register a, Register b){
 	#ifdef ENGINE_SIMD_SSE
-		return _mm_cvtss_f32(_mm_dp_ps(a,b,0x17));
+		return _mm_cvtss_f32(_mm_dp_ps(a,b,0x71));
 	#elif ENGINE_SIMD_NEON
 		float32x4_t mul_res = vmulq_f32(a,b);
 		mul_res = vsetq_lane_f32(0.0f,mul_res,3);
