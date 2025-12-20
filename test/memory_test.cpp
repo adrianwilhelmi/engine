@@ -319,12 +319,6 @@ TEST(AllocatorHandleTest, ForwardsArguments){
 	free_delete(handle,e);
 }
 
-TEST(VirutalMemoryTEst, PageSizeIsPowerOfTwo){
-	std::size_t psize = VirtualMemory::get_page_size();
-	EXPECT_GT(psize, 0u);
-	EXPECT_EQ(psize & (psize-1), 0u);
-}
-
 TEST(PageAllocatorTest, ReturnsPageAlignedAddress){
 	PageAllocator pa;
 	std::size_t page_size = VirtualMemory::get_page_size();
@@ -480,3 +474,71 @@ TEST(AllocatorE2E, SharedPageAllocationStarvation){
 	void* page3 = small_heap.allocate(1, 1);
 	EXPECT_EQ(page3, nullptr);
 }
+
+TEST(VirutalMemoryTest, PageSizeIsPowerOfTwo){
+	std::size_t psize = VirtualMemory::get_page_size();
+	EXPECT_GT(psize, 0u);
+	EXPECT_EQ(psize & (psize-1), 0u);
+}
+
+TEST(VirutalMemoryTest, ReserveAndReleaseDoesNotCrash){
+	std::size_t size = VirtualMemory::get_page_size() * 10;
+	void*ptr = VirtualMemory::reserve(size);
+	ASSERT_NE(ptr, nullptr);
+	VirtualMemory::release(ptr,size);
+}
+
+TEST(VirutalMemoryTest, CommitAllowsReadWrite){
+	std::size_t psize = VirtualMemory::get_page_size();
+	std::size_t size = psize*2;
+	
+	void*ptr = VirtualMemory::reserve(size);
+	ASSERT_NE(ptr,nullptr);
+
+	bool success = VirtualMemory::commit(ptr, size);
+	ASSERT_TRUE(success);
+
+	int* ints = static_cast<int*>(ptr);
+	ints[0] = 12345;
+	ints[100] = 9999;
+
+	EXPECT_EQ(ints[0], 12345);
+	EXPECT_EQ(ints[100], 9999);
+
+	VirtualMemory::release(ptr,size);
+}
+
+TEST(VirutalMemoryTest, PartialCommit){
+	std::size_t psize = VirtualMemory::get_page_size();
+	std::size_t total_size = psize*4;
+	
+	void*ptr = VirtualMemory::reserve(total_size);
+	ASSERT_NE(ptr, nullptr);
+
+	std::byte* base = static_cast<std::byte*>(ptr);
+
+	void*page2 = base + psize;
+	bool success = VirtualMemory::commit(page2, psize);
+
+	ASSERT_TRUE(success);
+
+	int*p = reinterpret_cast<int*>(page2);
+	*p = 37;
+	EXPECT_EQ(*p,37);
+
+	VirtualMemory::release(ptr, total_size);
+}
+
+TEST(VirutalMemoryTest, OSAlignedAllocRespectsAlignment){
+	std::size_t size = 1024;
+	std::size_t alignment = 256;
+
+	void*ptr = VirtualMemory::os_aligned_alloc(alignment, size);
+	ASSERT_NE(ptr, nullptr);
+
+	std::uintptr_t addr = reinterpret_cast<std::uintptr_t>(ptr);
+	EXPECT_EQ(addr % alignment, 0u);
+
+	VirtualMemory::os_aligned_free(ptr);
+}
+
