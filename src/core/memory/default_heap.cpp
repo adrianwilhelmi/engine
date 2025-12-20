@@ -15,7 +15,7 @@ void* DefaultHeap::allocate(
 }
 
 void DefaultHeap::deallocate(void* p) noexcept{
-	VirtualMemory::os_aligned_free(p);
+	engine::mem::os::VirtualMemory::os_aligned_free(p);
 }
 
 } // namespace engine::mem::allocator

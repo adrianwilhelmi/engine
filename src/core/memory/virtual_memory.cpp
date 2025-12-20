@@ -72,8 +72,8 @@ void VirtualMemory::release(void* ptr, std::size_t size){
 }
 
 void* VirtualMemory::os_aligned_alloc(
-		const std::size_t alignment, 
-		const std::size_t size){
+		std::size_t alignment, 
+		std::size_t size){
 #if defined(WIN32) || defined(_WIN64)
 	return _aligned_malloc(size, alignment);
 #elif defined(__linux__) || defined(__unix__)

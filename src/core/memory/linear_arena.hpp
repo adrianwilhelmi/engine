@@ -23,10 +23,11 @@ public:
 	std::size_t capacity() const {return capacity_;}
 
 private:
-	PageAllocator* backing_allocator_ = nullptr;
 	std::byte* buffer_ = nullptr;
 	std::size_t capacity_ = 0;
 	std::size_t offset_ = 0;
+
+	PageAllocator* backing_allocator_ = nullptr;
 };
 static_assert(utils::ArenaLike<LinearArena>);
 

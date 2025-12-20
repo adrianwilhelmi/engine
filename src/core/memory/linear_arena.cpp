@@ -26,10 +26,10 @@ LinearArena::~LinearArena() noexcept{
 }
 
 LinearArena::LinearArena(LinearArena&& other) noexcept
-		: backing_allocator_(other.backing_allocator_),
-		buffer_(other.buffer_),
+		: buffer_(other.buffer_),
 		capacity_(other.capacity_),
-		offset_(other.offset_){
+		offset_(other.offset_),
+		backing_allocator_(other.backing_allocator_){
 	other.backing_allocator_ = nullptr;
 	other.buffer_ = nullptr;
 	other.capacity_ = 0;

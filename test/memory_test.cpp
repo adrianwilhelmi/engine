@@ -3,7 +3,7 @@
 #include<algorithm>
 #include<gtest/gtest.h>
 
-#include<core/memory/deafult_heap.hpp>
+#include<core/memory/default_heap.hpp>
 #include<core/memory/linear_arena.hpp>
 #include<core/memory/pool_allocator.hpp>
 #include<core/memory/page_allocator.hpp>

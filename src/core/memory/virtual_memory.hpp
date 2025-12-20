@@ -24,9 +24,7 @@ struct VirtualMemory{
 	//	size arg is needed only on linux
 	static void release(void* ptr, std::size_t size);
 
-	static void* os_aligned_alloc(
-			const std::size_t alignment, 
-			const std::size_t size);
+	static void* os_aligned_alloc(std::size_t alignment, std::size_t size);
 
 	static void os_aligned_free(void*p);
 
