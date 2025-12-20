@@ -112,3 +112,71 @@ TEST(Vec3Test, Comparison){
 	EXPECT_FALSE(a.is_close(d,1e-6f));
 }
 
+
+TEST(Vec4Test, MemoryLayout){
+	EXPECT_EQ(sizeof(Vec4), 16);
+	EXPECT_EQ(alignof(Vec4), 16);
+
+	Vec4 v(1,2,3,4);
+	EXPECT_FLOAT_EQ(v.w,4.0f);
+}
+
+TEST(Vec4Test, Arithmetic){
+	Vec4 a(1,2,3,4);
+	Vec4 b(10,20,30,40);
+
+	Vec4 sum = a + b;
+	EXPECT_FLOAT_EQ(sum.x, 11.0f);
+	EXPECT_FLOAT_EQ(sum.w, 44.0f);
+
+	Vec4 mul = a*b;
+	EXPECT_FLOAT_EQ(mul.y, 40.0f);
+	EXPECT_FLOAT_EQ(mul.z, 90.0f);
+}
+
+TEST(Vec4Test, DotProduct){
+	float ax = 0.5f;
+	float ay = 4.1f;
+	float az = 3.0f;
+	float aw = 66.0f;
+
+	float bx = 44.0f;
+	float by = 2.3f;
+	float bz = 3.5f;
+	float bw = 0.4f;
+
+	Vec4 a(ax,ay,az,aw);
+	Vec4 b(bx,by,bz,bw);
+
+	float dot = ax*bx + ay*by + az*bz + aw*bw;
+
+	EXPECT_FLOAT_EQ(a.dot(b), dot);
+
+	Vec4 zone = Vec4{0.0f,0.0f,1.0f,0.0f};
+	Vec4 ywone = Vec4{0.0f,1.0f,0.0f,1.0f};
+
+	EXPECT_FLOAT_EQ(zone.dot(ywone), 0.0f);
+}
+
+TEST(Vec4Test, Comparison){
+	Vec4 a(1,2,3,4);
+	Vec4 b(1,2,3,5);
+
+	EXPECT_FALSE(a==b);
+
+	Vec4 c(1,2,3,4);
+	EXPECT_TRUE(a==c);
+
+	Vec4 d(1,2,3,3.999f);
+	EXPECT_TRUE(a.is_close(d,1e-3f));
+}
+
+TEST(Vec4Test, FromVec3){
+	Vec3 v3(1.0f, 2.0f, 3.0f);
+	Vec4 v4(v3);
+
+	EXPECT_FLOAT_EQ(v4.x, 1.0f);
+	EXPECT_FLOAT_EQ(v4.y, 2.0f);
+	EXPECT_FLOAT_EQ(v4.z, 3.0f);
+	EXPECT_FLOAT_EQ(v4.w, 0.0f);
+}
