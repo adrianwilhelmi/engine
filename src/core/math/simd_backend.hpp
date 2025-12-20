@@ -37,7 +37,12 @@ namespace engine::math::simd{
 	struct Register {float f[4]; };
 #endif
 
-#define FORCE_INLINE __attribute__((always_inline)) inline
+
+#if defined(_MSC_VER)
+	#define FORCE_INLINE __forceinline
+#else
+	#define FORCE_INLINE __attribute__((always_inline)) inline
+#endif
 
 [[nodiscard]] FORCE_INLINE std::string detected_arch(){
 	#ifdef ENGINE_SIMD_AVX
