@@ -542,3 +542,38 @@ TEST(VirutalMemoryTest, OSAlignedAllocRespectsAlignment){
 	VirtualMemory::os_aligned_free(ptr);
 }
 
+TEST(VirtualMemoryTest, AccessingUncommitedMemory){
+	//should crash
+
+	EXPECT_DEATH({
+		std::size_t psize = VirtualMemory::get_page_size();
+		void*ptr = VirtualMemory::reserve(psize);
+
+		int*dangerous = static_cast<int*>(ptr);
+		*dangerous = 1;
+
+		VirtualMemory::release(ptr,psize);
+	}, "");
+}
+
+TEST(VirtualMemoryTest, AccessingDecommitedMemory){
+	//should crash
+
+	EXPECT_DEATH({
+		std::size_t psize = VirtualMemory::get_page_size();
+		void*ptr = VirtualMemory::reserve(psize);
+		bool succ = VirtualMemory::commit(ptr,psize);
+		EXPECT_EQ(succ, true);
+
+		// OK
+		static_cast<int*>(ptr)[0] = 1;
+
+		VirtualMemory::decommit(ptr,psize);
+
+
+		// NOK
+		static_cast<int*>(ptr)[0] = 2;
+
+		VirtualMemory::release(ptr,psize);
+	}, "");
+}
