@@ -121,6 +121,16 @@ namespace engine::math::simd{
 	#endif
 }
 
+[[nodiscard]] FORCE_INLINE Register mul(Register a, Register b){
+	#ifdef ENGINE_SIMD_SSE
+		return _mm_mul_ps(a,b);
+	#elif ENGINE_SIMD_NEON
+		return vmulq_f32(a,b);
+	#else
+		return {a.f[0]*b.f[0], a.f[1]*b.f[1], a.f[2]*b.f[2], a.f[3]*b.f[3]};
+	#endif
+}
+
 [[nodiscard]] FORCE_INLINE Register mul(Register a, float s){
 	#ifdef ENGINE_SIMD_SSE
 		return _mm_mul_ps(a, _mm_set1_ps(s));
@@ -138,16 +148,6 @@ namespace engine::math::simd{
 		return vfmaq_f32(c,a,b);
 	#else
 		return add(mul(a,b),c);
-	#endif
-}
-
-[[nodiscard]] FORCE_INLINE Register mul(Register a, Register b){
-	#ifdef ENGINE_SIMD_SSE
-		return _mm_mul_ps(a,b);
-	#elif ENGINE_SIMD_NEON
-		return vmulq_f32(a,b);
-	#else
-		return {a.f[0]*b.f[0], a.f[1]*b.f[1], a.f[2]*b.f[2], a.f[3]*b.f[3]};
 	#endif
 }
 
