@@ -17,10 +17,10 @@ public:
 	LinearArena(LinearArena&& other) noexcept;
 	LinearArena& operator=(LinearArena&& other) = delete;
 
-	void* allocate(const std::size_t size, const std::size_t alignment = alignof(std::max_align_t)) noexcept;
+	[[nodiscard]] void* allocate(const std::size_t size, const std::size_t alignment = alignof(std::max_align_t)) noexcept;
 	void reset() noexcept;
-	std::size_t in_use() const {return offset_;}
-	std::size_t capacity() const {return capacity_;}
+	[[nodiscard]] std::size_t in_use() const {return offset_;}
+	[[nodiscard]] std::size_t capacity() const {return capacity_;}
 
 private:
 	std::byte* buffer_ = nullptr;

@@ -11,7 +11,7 @@ struct DefaultHeap{
 
 	DefaultHeap() noexcept = default;
 
-	void* allocate(
+	[[nodiscard]] void* allocate(
 			const std::size_t size,
 			const std::size_t alignment = alignof(std::max_align_t)) noexcept;
 	void deallocate(void* p) noexcept;

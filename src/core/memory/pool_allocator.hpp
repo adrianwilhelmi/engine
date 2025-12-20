@@ -19,8 +19,8 @@ public:
 	void deallocate(void* p) noexcept;
 	void reset() noexcept;
 
-	std::size_t capacity() const noexcept {return capacity_count_;}
-	std::size_t free_count() const noexcept;
+	[[nodiscard]] std::size_t capacity() const noexcept {return capacity_count_;}
+	[[nodiscard]] std::size_t free_count() const noexcept;
 
 private:
 	void init_free_list() noexcept;
