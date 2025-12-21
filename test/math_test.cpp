@@ -219,4 +219,86 @@ TEST(Mat4Test, MulByVector){
 	EXPECT_TRUE(result.is_close(expected));
 }
 
+TEST(Mat4Test, MatMul){
+	Mat4 S = Mat4(Vec4(2,0,0,0), Vec4(0,2,0,0), Vec4(0,0,2,0), Vec4(0,0,0,1));
+	Mat4 T = Mat4::identity();
 
+	T.cols[3] = Vec4(10,20,30,1);
+
+	Mat4 result = S*T;
+
+	Vec4 res = result.cols[3];;
+	Vec4 expected = Vec4{20.0f, 40.0f, 60.0f, 1.0f};
+	EXPECT_TRUE(res.is_close(expected,1e-8f));
+}
+
+TEST(Mat4Test, Transpose){
+	Mat4 m(
+		Vec4(1,2,3,4),
+		Vec4(5,6,7,8),
+		Vec4(9,10,11,12),
+		Vec4(13,14,15,16)
+	);
+
+	Mat4 mt = m.transpose();
+
+	Vec4 col0 = mt.cols[0];
+	EXPECT_FLOAT_EQ(col0.x, 1.0f);
+	EXPECT_FLOAT_EQ(col0.y, 5.0f);
+	EXPECT_FLOAT_EQ(col0.z, 9.0f);
+	EXPECT_FLOAT_EQ(col0.w, 13.0f);
+
+}
+
+TEST(Mat4Test, PerspectiveProjection){
+	float fov = 1.0472f;
+	float aspect = 1.777f;
+	float near = 0.1f;
+	float far = 100.0f;
+
+	Mat4 P = Mat4::perspective(fov, aspect, near, far);
+
+	Vec4 point_near(0.0f, 0.0f, -near, 1.0f);
+	Vec4 res_near = P * point_near;
+
+	float w = res_near.w;
+	EXPECT_NEAR(res_near.z / w, 0.0f, 1e-5f);
+	
+	Vec4 point_far(0.0f, 0.0f, -far, 1.0f);
+	Vec4 res_far = P * point_far;
+
+	float w_far = res_far.w;
+	EXPECT_NEAR(res_far.z / w_far, 1.0f, 1e-5f);
+}
+
+TEST(Mat4Test, MulAssociativity){
+	Mat4 A = Mat4::perspective(1.0f,1.0f,0.1f,10.0f);
+	Mat4 B = Mat4::identity();
+	B.cols[3] = Vec4(1,2,3,1);
+	Mat4 C = Mat4(Vec4(2,0,0,0), Vec4(0,2,0,0), Vec4(0,0,2,0), Vec4(0,0,0,1));
+
+	Mat4 res1 = (A*B)*C;
+	Mat4 res2 = A*(B*C);
+
+	for(int i = 0; i < 4; ++i){
+		EXPECT_TRUE(res1.cols[i].is_close(res2.cols[i], 1e-5f));
+	}
+}
+
+TEST(Mat4Test, TransposeFull){
+	Mat4 m(
+		Vec4(1, 2, 3, 4),
+		Vec4(5, 6, 7, 8),
+		Vec4(9, 10, 11, 12),
+		Vec4(13, 14, 15, 16)
+	);
+	Mat4 mt = m.transpose();
+
+	float expected[16] = {
+		1, 5, 9, 13,
+		2, 6, 10, 14,
+		3, 7, 11, 15,
+		4, 8, 12, 16
+	};
+	ExpectMat4Near(mt, expected);
+}
