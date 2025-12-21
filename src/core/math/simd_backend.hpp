@@ -356,12 +356,13 @@ namespace engine::math::simd{
 }
 
 [[nodiscard]] FORCE_INLINE bool is_close_all(Register a, Register b, float eps){
-	Register epsilon = set1(eps);
 	Register diff = abs(sub(a,b));
 	#ifdef ENGINE_SIMD_SSE
+		Register epsilon = set1(eps);
 		__m128 cmp = _mm_cmplt_ps(diff, epsilon);
 		return (_mm_movemask_ps(cmp) & 0xF) == 0xF;
 	#elif ENGINE_SIMD_NEON
+		Register epsilon = set1(eps);
 		uint32x4_t cmp = vcltq_f32(diff, epsilon);
 		return vminvq_u32(cmp) == 0xFFFFFFFF;
 	#else
@@ -373,12 +374,13 @@ namespace engine::math::simd{
 }
 
 [[nodiscard]] FORCE_INLINE bool is_close_xyz(Register a, Register b, float eps){
-	Register epsilon = set1(eps);
 	Register diff = abs(sub(a,b));
 	#ifdef ENGINE_SIMD_SSE
+		Register epsilon = set1(eps);
 		__m128 cmp = _mm_cmplt_ps(diff, epsilon);
 		return (_mm_movemask_ps(cmp) & 0x7) == 0x7;
 	#elif ENGINE_SIMD_NEON
+		Register epsilon = set1(eps);
 		uint32x4_t cmp = vcltq_f32(diff, epsilon);
 		cmp = vsetq_lane_u32(0xFFFFFFFF, cmp, 3);
 		return vminvq_u32(cmp) == 0xFFFFFFFF;
@@ -426,12 +428,12 @@ FORCE_INLINE void transpose(
 		c3 = vcombine_f32(vget_high_f32(r01.val[1]), vget_high_f32(r23.val[1]));
 
 	#else
-		std::swap(c0[1], c1[0]);
-		std::swap(c0[2], c2[0]);
-		std::swap(c0[3], c3[0]);
-		std::swap(c1[2], c2[1]);
-		std::swap(c1[3], c3[1]);
-		std::swap(c2[3], c3[2]);
+		std::swap(c0.f[1], c1.f[0]);
+		std::swap(c0.f[2], c2.f[0]);
+		std::swap(c0.f[3], c3.f[0]);
+		std::swap(c1.f[2], c2.f[1]);
+		std::swap(c1.f[3], c3.f[1]);
+		std::swap(c2.f[3], c3.f[2]);
 
 	#endif
 }
