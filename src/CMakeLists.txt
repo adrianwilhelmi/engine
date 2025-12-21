@@ -20,7 +20,7 @@ add_library(EngineCore STATIC
 )
 
 if(ENGINE_NO_SIMD)
-	target_compile_options(EngineCore PUBLIC FORCE_NO_SIMD)
+	target_compile_definitions(EngineCore PUBLIC FORCE_NO_SIMD)
 	message(STATUS "SIMD: Manually DISABLED (Fallback mode)")
 else()
 	if(MSVC)

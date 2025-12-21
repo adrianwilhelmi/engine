@@ -94,36 +94,37 @@ jobs:
           cd build
           ctest --output-on-failure
 
-  build-arm:
-    name: ubuntu-24.04 ARM64 (NEON)
-    runs-on: ubuntu-24.04-arm64
+  build-arm-qemu:
+    name: ubuntu-latest ARM64 (NEON) via QEMU
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Install dependencies
-        run: |
-          sudo apt update
-          sudo apt-get -y install build-essential cmake ninja-build libsdl3-dev \
-          libvulkan-dev
 
-      - name: Build SDL3
-        run: |
-          git clone https://github.com/libsdl-org/SDL.git
-          cd SDL
-          mkdir build && cd build
-          cmake .. -G Ninja -DCMAKE_BUILD_TYPE=Release -DSDL_TEST=OFF
-          ninja
-          sudo ninja install
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+        with:
+          platforms: arm64
 
-      - name: Build
+      - name: Build and Test inside ARM64 Fedora
         run: |
-          mkdir build && cd build
-          cmake .. -G Ninja -DCMAKE_BUILD_TYPE=Release ${{ matrix.cmake_params }}
-          ninja
+          docker run --rm --platform linux/arm64 \
+          -v ${{ github.workspace }}:/workspace \
+          -w /workspace \
+          fedora:39 \
+          bash -c "
+            dnf -y install gcc gcc-c++ cmake ninja-build git-core \
+                   alsa-lib-devel libX11-devel libXrandr-devel libXcursor-devel \
+                   libXext-devel libXi-devel libxkbcommon-devel vulkan-devel \
+                   mesa-libGL-devel && \
+            
+            git clone https://github.com/libsdl-org/SDL.git --depth 1 && \
+            cmake -S SDL -B SDL/build -G Ninja -DCMAKE_BUILD_TYPE=Release -DSDL_TEST=OFF && \
+            cmake --build SDL/build --target install && \
 
-      - name: Run tests
-        run: |
-          cd build
-          ctest --output-on-failure
+            cmake -B build-arm -G Ninja -DCMAKE_BUILD_TYPE=Release && \
+            cmake --build build-arm && \
+            ctest --test-dir build-arm --output-on-failure
+          "
 
   build-windows:
     name: windows-latest
