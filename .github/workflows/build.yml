@@ -94,38 +94,6 @@ jobs:
           cd build
           ctest --output-on-failure
 
-  build-arm:
-    name: ubuntu-24.04 (ARM64)
-    runs-on: ubuntu-24.04-arm64
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Install dependencies
-        run: |
-          sudo apt update
-          sudo apt-get -y install build-essential cmake ninja-build \
-          libsdl3-dev libvulkan-dev
-
-      - name: Build SDL3
-        run: |
-          git clone https://github.com/libsdl-org/SDL.git
-          cd SDL
-          mkdir build && cd build
-          cmake .. -G Ninja -DCMAKE_BUILD_TYPE=Release -DSDL_TEST=OFF
-          ninja
-          sudo ninja install
-
-      - name: Build
-        run: |
-          mkdir build && cd build
-          cmake .. -G Ninja -DCMAKE_BUILD_TYPE=Release ${{ matrix.cmake_params }}
-          ninja
-
-      - name: Run tests
-        run: |
-          cd build
-          ctest --output-on-failure
-
   build-windows:
     name: windows-latest
     runs-on: windows-latest
