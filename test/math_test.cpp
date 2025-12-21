@@ -3,6 +3,7 @@
 #include<core/math/vec3.hpp>
 #include<core/math/vec3packed.hpp>
 #include<core/math/vec4.hpp>
+#include<core/math/mat4.hpp>
 
 #include<gtest/gtest.h>
 
@@ -176,4 +177,32 @@ TEST(Vec4Test, FromVec3){
 	EXPECT_FLOAT_EQ(v4.y, 2.0f);
 	EXPECT_FLOAT_EQ(v4.z, 3.0f);
 	EXPECT_FLOAT_EQ(v4.w, 0.0f);
+}
+
+void ExpectMat4Near(
+		const Mat4& actual,
+		const float expected[16],
+		float abs_err = 1e-5f){
+	for(int col = 0; col < 4; ++col){
+		Vec4 actual_data = actual.cols[col];
+		EXPECT_NEAR(actual_data.x, expected[col*4 + 0], abs_err)
+			<< "Error at col " << col << ", row 0";
+		EXPECT_NEAR(actual_data.y, expected[col*4 + 1], abs_err)
+			<< "Error at col " << col << ", row 1";
+		EXPECT_NEAR(actual_data.z, expected[col*4 + 2], abs_err)
+			<< "Error at col " << col << ", row 2";
+		EXPECT_NEAR(actual_data.w, expected[col*4 + 3], abs_err)
+			<< "Error at col " << col << ", row 3";
+	}
+}
+
+TEST(Mat4Test, Identity){
+	Mat4 id = Mat4::identity();
+	float expected[16] = {
+		1,0,0,0,
+		0,1,0,0,
+		0,0,1,0,
+		0,0,0,1
+	};
+	ExpectMat4Near(id, expected);
 }

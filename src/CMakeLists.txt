@@ -17,6 +17,7 @@ add_library(EngineCore STATIC
 	core/math/vec3.hpp
 	core/math/vec3packed.hpp
 	core/math/vec4.hpp
+	core/math/mat4.hpp
 )
 
 if(ENGINE_NO_SIMD)

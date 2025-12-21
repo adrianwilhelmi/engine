@@ -402,4 +402,38 @@ template<int Index>
 	#endif
 }
 
+FORCE_INLINE void transpose(
+		Register& c0, 
+		Register& c1,
+		Register& c2,
+		Register& c3){
+	#if defined(ENGINE_SIMD_SSE)
+		__m128 tmp0 = _mm_unpacklo_ps(c0,c1);
+		__m128 tmp1 = _mm_unpacklo_ps(c2,c3);
+		__m128 tmp2 = _mm_unpackhi_ps(c0,c1);
+		__m128 tmp3 = _mm_unpackhi_ps(c2,c3);
+		c0 = _mm_movelh_ps(tmp0, tmp1);
+		c1 = _mm_movehl_ps(tmp1, tmp0);
+		c2 = _mm_movelh_ps(tmp2, tmp3);
+		c3 = _mm_movehl_ps(tmp3, tmp2);
+
+	#elif defined(ENGINE_SIMD_NEON)
+		float32x4x2_t r01 = vzipq_f32(c0,c1);
+		float32x4x2_t r23 = vzipq_f32(c2,c3);
+		c0 = vcombine_f32(vget_low_f32(r01.val[0]), vget_low_f32(r23.val[0]));
+		c1 = vcombine_f32(vget_low_f32(r01.val[1]), vget_low_f32(r23.val[1]));
+		c2 = vcombine_f32(vget_high_f32(r01.val[0]), vget_high_f32(r23.val[0]));
+		c3 = vcombine_f32(vget_high_f32(r01.val[1]), vget_high_f32(r23.val[1]));
+
+	#else
+		std::swap(c0[1], c1[0]);
+		std::swap(c0[2], c2[0]);
+		std::swap(c0[3], c3[0]);
+		std::swap(c1[2], c2[1]);
+		std::swap(c1[3], c3[1]);
+		std::swap(c2[3], c3[2]);
+
+	#endif
+}
+
 } // namespace engine::math::simd

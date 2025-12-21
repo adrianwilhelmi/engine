@@ -127,7 +127,10 @@ struct alignas(16) Vec4{
 		return Vec4(simd::splat<I>(this->reg));
 	}
 
-	FORCE_INLINE static Vec4 fmadd(const Vec4& a, const Vec4& b, const Vec4& c){
+	[[nodiscard]] FORCE_INLINE static Vec4 fmadd(
+			const Vec4& a,
+			const Vec4& b,
+			const Vec4& c){
 		// returns (a * b) + c
 		return Vec4(simd::fmadd(a.reg, b.reg, c.reg));
 	}
