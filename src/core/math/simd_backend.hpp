@@ -325,7 +325,7 @@ namespace engine::math::simd{
 		__m128 cmp = _mm_cmpeq_ps(a,b);
 		return (_mm_movemask_ps(cmp) & 0x7) == 0x7;
 
-	#elif ENGINE_SIMD_NEON - no easy bit masking in neon
+	#elif ENGINE_SIMD_NEON
 		uint32x4_t cmp = vceqq_f32(a,b);
 		uint32_t mask_data[4] = {0,0,0,0xFFFFFFFF};
 		uint32x4_t w_ignore = vld1q_u32(mask_data);
@@ -397,7 +397,7 @@ template<int Index>
 		return vdupq_lane_f32(r, Index);
 	#else
 		static_assert(Index >= 0 && Index < 4, "index oob");
-		float val = r.data[Index];
+		float val = r.f[Index];
 		return {val,val,val,val};
 	#endif
 }
