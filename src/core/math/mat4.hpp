@@ -79,7 +79,7 @@ struct Mat4{
 			const float aspect,
 			const float znear,
 			const float zfar){
-		const float h = 1.0f / std::tanf(fov_radians * 0.5f);
+		const float h = 1.0f / std::tan(fov_radians * 0.5f);
 		const float w = h / aspect;
 		const float a = zfar / (znear - zfar);
 		const float b = (znear * zfar) / (znear - zfar);

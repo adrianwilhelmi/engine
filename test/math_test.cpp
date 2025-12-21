@@ -206,3 +206,17 @@ TEST(Mat4Test, Identity){
 	};
 	ExpectMat4Near(id, expected);
 }
+
+TEST(Mat4Test, MulByVector){
+	Mat4 translation = Mat4::identity();
+	translation.cols[3] = Vec4(10.0f, 20.0f, 30.0f, 1.0f);
+
+	Vec4 point(1.0f, 2.0f, 3.0f, 1.0f);
+	Vec4 result = translation * point;
+
+	Vec4 expected{11.0f, 22.0f, 33.0f, 1.0f};
+
+	EXPECT_TRUE(result.is_close(expected));
+}
+
+
