@@ -7,7 +7,7 @@
 
 #if defined(FORCE_NO_SIMD)
 	#define ENGINE_SIMD_NONE
-#if defined(__AVX2__)
+#elif defined(__AVX2__)
 	// use SSE anyways, __m256 not needed
 	#define ENGINE_SIMD_SSE
 	#define ENGINE_SIMD_AVX

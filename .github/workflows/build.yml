@@ -8,7 +8,7 @@ on:
 
 jobs:
   build-fedora:
-    name: Build (fedora-latest)
+    name: fedora-latest
     runs-on: ubuntu-latest
     container:
       image: fedora:39
@@ -48,7 +48,7 @@ jobs:
           ctest --test-dir build --output-on-failure -C Release
 
   build-ubuntu:
-    name: Build (ubuntu-latest), (${{ matrix.simd_mode }})
+    name: ubuntu-latest (${{ matrix.simd_mode }})
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
@@ -95,7 +95,7 @@ jobs:
           ctest --output-on-failure
 
   build-arm:
-    name: Ubuntu ARM64 (NEON)
+    name: ubuntu-24.04 ARM64 (NEON)
     runs-on: ubuntu-24.04-arm64
     steps:
       - uses: actions/checkout@v4
