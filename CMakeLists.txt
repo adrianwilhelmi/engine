@@ -1,4 +1,5 @@
 option(ENGINE_BUILD_TESTS "Build unit tests" ON)
+option(ENGINE_NO_SIMD "Force disable SIMD and use fallback" OFF)
 
 
 cmake_minimum_required(VERSION 3.25)

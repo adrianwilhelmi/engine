@@ -1,6 +1,7 @@
 #pragma once
 
 #include<iostream>
+#include<iomanip>
 
 #include"simd_backend.hpp"
 #include"vec3packed.hpp"
@@ -101,8 +102,12 @@ struct alignas(16) Vec3{
 
 	[[nodiscard]] FORCE_INLINE Vec3 normalized() const{
 		simd::Register len_sq = simd::dot3_splat(reg,reg);
-		simd::Register epsilon = simd::set(1.0e-8f, 1.0e-8f, 1.0e-8f, 1.0e-8f);
-		len_sq = simd::add(len_sq, epsilon);
+		simd::Register inv_len = simd::rsqrt_accurate(len_sq);
+		return Vec3(simd::mul(reg, inv_len));
+	}
+
+	[[nodiscard]] FORCE_INLINE Vec3 normalized_fast() const{
+		simd::Register len_sq = simd::dot3_splat(reg,reg);
 		simd::Register inv_len = simd::rsqrt(len_sq);
 		return Vec3(simd::mul(reg, inv_len));
 	}
@@ -142,7 +147,7 @@ static_assert(offsetof(Vec3,Vec3::y) == sizeof(float), "Vec3: Gap between x and 
 static_assert(offsetof(Vec3,Vec3::z) == 2*sizeof(float), "Vec3: Gap between y and z");
 
 inline std::ostream& operator<<(std::ostream& os, const Vec3& v){
-	os << "Vec3(" << v.x << ", " << v.y << ", " << v.z << ")";
+	os << "Vec3(\n\t" << v.x << ",\n\t" << v.y << ",\n\t" << v.z << "\n)\n";
 	return os;
 }
 

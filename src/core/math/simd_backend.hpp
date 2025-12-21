@@ -5,6 +5,8 @@
 #include<string>
 #include<algorithm>
 
+#if defined(FORCE_NO_SIMD)
+	#define ENGINE_SIMD_NONE
 #if defined(__AVX2__)
 	// use SSE anyways, __m256 not needed
 	#define ENGINE_SIMD_SSE
@@ -196,6 +198,17 @@ namespace engine::math::simd{
 	#endif
 }
 
+
+[[nodiscard]] FORCE_INLINE Register rsqrt_accurate(Register a){
+	const Register half_neg = set(-0.5f, -0.5f, -0.5f, -0.5f);
+	const Register three_halfs = set(1.5f, 1.5f, 1.5f, 1.5f);
+
+	Register nr = rsqrt(a);
+	Register muls = mul(mul(a,nr),nr);
+
+	return mul(nr, fmadd(muls, half_neg, three_halfs));
+}
+
 [[nodiscard]] FORCE_INLINE float dot3(Register a, Register b){
 	#ifdef ENGINE_SIMD_SSE
 		return _mm_cvtss_f32(_mm_dp_ps(a,b,0x71));
@@ -311,8 +324,14 @@ namespace engine::math::simd{
 	#ifdef ENGINE_SIMD_SSE
 		__m128 cmp = _mm_cmpeq_ps(a,b);
 		return (_mm_movemask_ps(cmp) & 0x7) == 0x7;
-	//#elif ENGINE_SIMD_NEON - no easy bit masking in neon
-		
+
+	#elif ENGINE_SIMD_NEON - no easy bit masking in neon
+		uint32x4_t cmp = vceqq_f32(a,b);
+		uint32_t mask_data[4] = {0,0,0,0xFFFFFFFF};
+		uint32x4_t w_ignore = vld1q_u32(mask_data);
+		uint32x4_t cmp_xyz = vorrq_u32(cmp, w_ignore);
+		return vminvq_u32(cmp_xyz) == 0xFFFFFFFF;
+
 	#else
 		return a.f[0]==b.f[0] &&
 			a.f[1] == b.f[1] &&
@@ -336,7 +355,7 @@ namespace engine::math::simd{
 	#endif
 }
 
-[[nodiscard]] FORCE_INLINE bool is_close(Register a, Register b, float eps){
+[[nodiscard]] FORCE_INLINE bool is_close_all(Register a, Register b, float eps){
 	Register epsilon = set1(eps);
 	Register diff = abs(sub(a,b));
 	#ifdef ENGINE_SIMD_SSE
@@ -367,6 +386,19 @@ namespace engine::math::simd{
 		return diff.f[0] < eps 
 			&& diff.f[1] < eps 
 			&& diff.f[2] < eps;
+	#endif
+}
+
+template<int Index>
+[[nodiscard]] FORCE_INLINE Register splat(Register r){
+	#ifdef ENGINE_SIMD_SSE
+		return _mm_shuffle_ps(r,r,_MM_SHUFFLE(Index, Index, Index, Index));
+	#elif ENGINE_SIMD_NEON
+		return vdupq_lane_f32(r, Index);
+	#else
+		static_assert(Index >= 0 && Index < 4, "index oob");
+		float val = r.data[Index];
+		return {val,val,val,val};
 	#endif
 }
 

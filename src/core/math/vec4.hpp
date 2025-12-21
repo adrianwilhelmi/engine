@@ -96,8 +96,12 @@ struct alignas(16) Vec4{
 
 	[[nodiscard]] FORCE_INLINE Vec4 normalized() const{
 		simd::Register len_sq = simd::dot4_splat(reg,reg);
-		simd::Register epsilon = simd::set(1.0e-8f, 1.0e-8f, 1.0e-8f, 1.0e-8f);
-		len_sq = simd::add(len_sq, epsilon);
+		simd::Register inv_len = simd::rsqrt_accurate(len_sq);
+		return Vec4(simd::mul(reg, inv_len));
+	}
+
+	[[nodiscard]] FORCE_INLINE Vec4 normalized_fast() const{
+		simd::Register len_sq = simd::dot4_splat(reg,reg);
 		simd::Register inv_len = simd::rsqrt(len_sq);
 		return Vec4(simd::mul(reg, inv_len));
 	}
@@ -115,7 +119,17 @@ struct alignas(16) Vec4{
 	}
 
 	[[nodiscard]] FORCE_INLINE bool is_close(const Vec4& other, float epsilon = 1e-5f) const{
-		return simd::is_close(reg, other.reg, epsilon);
+		return simd::is_close_all(reg, other.reg, epsilon);
+	}
+
+	template<int I>
+	[[nodiscard]] FORCE_INLINE Vec4 splat() const{
+		return Vec4(simd::splat<I>(this->reg));
+	}
+
+	FORCE_INLINE static Vec4 fmadd(const Vec4& a, const Vec4& b, const Vec4& c){
+		// returns (a * b) + c
+		return Vec4(simd::fmadd(a.reg, b.reg, c.reg));
 	}
 };
 

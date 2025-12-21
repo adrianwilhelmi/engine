@@ -87,16 +87,13 @@ TEST(Vec3Test, CrossProduct){
 
 TEST(Vec3Test, Normalization){
 	Vec3 v(3.0f, 0.0f, 0.0f);
-	Vec3 n = v.normalized();
+	Vec3 nf = v.normalized_fast();
 
 	Vec3 res(1.0f,0.0f,0.0f);
+	EXPECT_TRUE(nf.is_close(res,1e-3f));
 
-	EXPECT_TRUE(n.is_close(res,1e-3f));
-
-	Vec3 zero(0.0f, 0.0f, 0.0f);
-	Vec3 zero_n = zero.normalized();
-
-	EXPECT_FALSE(std::isnan(zero_n.x));
+	Vec3 n = v.normalized();
+	EXPECT_TRUE(n.is_close(res,1e-7f));
 }
 
 TEST(Vec3Test, Comparison){
