@@ -2,3 +2,5 @@ build
 *.o
 *.swp
 a.out
+bench/matmul/m_a.txt
+bench/matmul/m_b.txt

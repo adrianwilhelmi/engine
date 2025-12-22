@@ -1,6 +1,6 @@
 option(ENGINE_BUILD_TESTS "Build unit tests" ON)
 option(ENGINE_NO_SIMD "Force disable SIMD and use fallback" OFF)
-
+option(ENGINE_BUILD_BENCHMARKS "Build benchmarks" OFF)
 
 cmake_minimum_required(VERSION 3.25)
 project(Engine LANGUAGES CXX)
@@ -8,8 +8,9 @@ project(Engine LANGUAGES CXX)
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
+add_library(engine_strict_flags INTERFACE)
 if(MSVC)
-	add_compile_options(
+	target_compile_options(engine_strict_flags INTERFACE
 		/W4
 		/permissive-
 		/Zc:__cplusplus
@@ -19,12 +20,14 @@ if(MSVC)
 	)
 
 	if(CMAKE_BUILD_TYPE MATCHES Debug)
-		add_compile_options(/fsanitize=address)
+		target_compile_options(engine_strict_flags INTERFACE
+			/fsanitize=address
+		)
 	endif()
 endif()
 
 if(UNIX)
-	add_compile_options(
+	target_compile_options(engine_strict_flags INTERFACE
 		-Wall
 		-Wextra
 		-Wpedantic
@@ -34,8 +37,14 @@ if(UNIX)
 	)
 
 	if(CMAKE_BUILD_TYPE MATCHES Debug)
-		add_compile_options(-fsanitize=address -g -fno-omit-frame-pointer)
-		add_link_options(-fsanitize=address)
+		target_compile_options(engine_strict_flags INTERFACE
+			-fsanitize=address
+			-g
+			-fno-omit-frame-pointer
+		)
+		add_link_options(engine_strict_flags INTERFACE
+			-fsanitize=address
+		)
 	else()
 		set(CMAKE_INTERPROCEDURAL_OPTIMIZATION ON)
 	endif()
@@ -61,6 +70,31 @@ if(ENGINE_BUILD_TESTS)
 	add_subdirectory(test)
 else()
 	message(STATUS "Tests are DISABLED.")
+endif()
+
+if(ENGINE_BUILD_BENCHMARKS)
+	include(FetchContent)
+
+	FetchContent_Declare(
+		googlebenchmark
+		URL https://github.com/google/benchmark/archive/refs/tags/v1.8.3.zip
+	)
+
+	FetchContent_Declare(
+		glm
+		URL https://github.com/g-truc/glm/archive/refs/tags/1.0.1.zip
+	)
+
+	set(BENCHMARK_ENABLE_TESTING OFF CACHE BOOL "" FORCE)
+	set(BENCHMARK_ENABLE_INSTALL OFF CACHE BOOL "" FORCE)
+	set(BENCHMARK_ENABLE_GTEST_TESTS OFF CACHE BOOL "" FORCE)
+
+	set(GLM_BUILD_TESTS_ OFF CACHE BOOL "" FORCE)
+	set(GLM_INSTALL OFF CACHE BOOL "" FORCE)
+
+	FetchContent_MakeAvailable(googlebenchmark glm)
+
+	add_subdirectory(bench)
 endif()
 
 add_subdirectory(app)

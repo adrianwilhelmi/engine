@@ -1,0 +1,52 @@
+2025-12-22T18:41:40+01:00
+Running ./../../build/bench/bench_matmul
+Run on (1 X 2592 MHz CPU )
+CPU Caches:
+  L1 Data 32 KiB (x1)
+  L1 Instruction 32 KiB (x1)
+  L2 Unified 256 KiB (x1)
+  L3 Unified 12288 KiB (x1)
+Load Average: 0.92, 0.95, 0.93
+name,iterations,real_time,cpu_time,time_unit,bytes_per_second,items_per_second,label,error_occurred,error_message
+"BM_naive_matmul/repeats:10",26015803,21.386,20.1341,ns,,,,,
+"BM_naive_matmul/repeats:10",26015803,27.9653,26.7799,ns,,,,,
+"BM_naive_matmul/repeats:10",26015803,25.4932,25.2472,ns,,,,,
+"BM_naive_matmul/repeats:10",26015803,20.33,20.0036,ns,,,,,
+"BM_naive_matmul/repeats:10",26015803,21.965,21.7772,ns,,,,,
+"BM_naive_matmul/repeats:10",26015803,19.1289,18.9202,ns,,,,,
+"BM_naive_matmul/repeats:10",26015803,19.92,19.8581,ns,,,,,
+"BM_naive_matmul/repeats:10",26015803,18.3738,18.245,ns,,,,,
+"BM_naive_matmul/repeats:10",26015803,18.7986,18.6852,ns,,,,,
+"BM_naive_matmul/repeats:10",26015803,18.8164,18.706,ns,,,,,
+"BM_naive_matmul/repeats:10_mean",10,21.2177,20.8357,ns,,,,,
+"BM_naive_matmul/repeats:10_median",10,20.125,19.9309,ns,,,,,
+"BM_naive_matmul/repeats:10_stddev",10,3.17871,2.93188,ns,,,,,
+"BM_naive_matmul/repeats:10_cv",10,1.49814e+07,1.40715e+07,ns,,,,,
+"BM_custom_matmul/repeats:10",44926958,17.5165,17.3186,ns,,,,,
+"BM_custom_matmul/repeats:10",44926958,17.9648,17.4127,ns,,,,,
+"BM_custom_matmul/repeats:10",44926958,18.1321,17.9368,ns,,,,,
+"BM_custom_matmul/repeats:10",44926958,13.4785,13.2967,ns,,,,,
+"BM_custom_matmul/repeats:10",44926958,12.5017,12.4315,ns,,,,,
+"BM_custom_matmul/repeats:10",44926958,12.7828,12.732,ns,,,,,
+"BM_custom_matmul/repeats:10",44926958,11.7553,11.698,ns,,,,,
+"BM_custom_matmul/repeats:10",44926958,11.2534,11.2017,ns,,,,,
+"BM_custom_matmul/repeats:10",44926958,11.1249,11.0868,ns,,,,,
+"BM_custom_matmul/repeats:10",44926958,12.4889,12.4344,ns,,,,,
+"BM_custom_matmul/repeats:10_mean",10,13.8999,13.7549,ns,,,,,
+"BM_custom_matmul/repeats:10_median",10,12.6422,12.5832,ns,,,,,
+"BM_custom_matmul/repeats:10_stddev",10,2.83215,2.71186,ns,,,,,
+"BM_custom_matmul/repeats:10_cv",10,2.03754e+07,1.97155e+07,ns,,,,,
+"BM_glm_matmul/repeats:10",15924396,43.6659,43.3482,ns,,,,,
+"BM_glm_matmul/repeats:10",15924396,43.9193,43.3139,ns,,,,,
+"BM_glm_matmul/repeats:10",15924396,43.5995,43.2779,ns,,,,,
+"BM_glm_matmul/repeats:10",15924396,33.392,33.2696,ns,,,,,
+"BM_glm_matmul/repeats:10",15924396,29.6506,29.4577,ns,,,,,
+"BM_glm_matmul/repeats:10",15924396,29.8208,29.7227,ns,,,,,
+"BM_glm_matmul/repeats:10",15924396,30.4351,30.2343,ns,,,,,
+"BM_glm_matmul/repeats:10",15924396,29.9575,29.8106,ns,,,,,
+"BM_glm_matmul/repeats:10",15924396,31.9254,31.7848,ns,,,,,
+"BM_glm_matmul/repeats:10",15924396,31.0265,30.7499,ns,,,,,
+"BM_glm_matmul/repeats:10_mean",10,34.7393,34.497,ns,,,,,
+"BM_glm_matmul/repeats:10_median",10,31.4759,31.2673,ns,,,,,
+"BM_glm_matmul/repeats:10_stddev",10,6.30218,6.18611,ns,,,,,
+"BM_glm_matmul/repeats:10_cv",10,1.81414e+07,1.79323e+07,ns,,,,,

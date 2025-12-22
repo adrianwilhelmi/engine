@@ -2,6 +2,7 @@
 
 #include<iostream>
 #include<cmath>
+#include<vector>
 
 #include"vec4.hpp"
 
@@ -30,6 +31,28 @@ struct Mat4{
 
 	static Mat4 identity(){
 		return Mat4();
+	}
+
+	Mat4(const std::vector<float>& vec){
+		for(int i = 0; i < 4; ++i){
+			cols[i] = Vec4(
+				vec[i*4 + 0],
+				vec[i*4 + 1],
+				vec[i*4 + 2],
+				vec[i*4 + 3]
+			);
+		}
+	}
+
+	Mat4(const float* vec){
+		for(int i = 0; i < 4; ++i){
+			cols[i] = Vec4{
+				vec[i*4 + 0],
+				vec[i*4 + 1],
+				vec[i*4 + 2],
+				vec[i*4 + 3]
+			};
+		}
 	}
 
 	[[nodiscard]] FORCE_INLINE static Vec4 mul(const Mat4& m, const Vec4& v){

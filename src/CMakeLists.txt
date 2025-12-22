@@ -41,6 +41,10 @@ endif()
 
 set_target_properties(EngineCore PROPERTIES LINKER_LANGUAGE CXX)
 
+target_link_libraries(EngineCore PRIVATE
+	engine_strict_flags
+)
+
 target_link_libraries(EngineCore PUBLIC
 	SDL3::SDL3
 	Vulkan::Vulkan

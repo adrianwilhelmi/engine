@@ -4,6 +4,8 @@
 #include<cstddef>
 
 #include"simd_backend.hpp"
+#include"vec3.hpp"
+#include"vec3packed.hpp"
 
 namespace engine::math{
 
