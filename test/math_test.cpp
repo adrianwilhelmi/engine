@@ -302,3 +302,134 @@ TEST(Mat4Test, TransposeFull){
 	};
 	ExpectMat4Near(mt, expected);
 }
+
+TEST(Mat4Test, InverseNoScale){
+	Mat4 transform = Mat4::identity();
+	transform.cols[0] = Vec4(0,0,-1,0);
+	transform.cols[1] = Vec4(0,1,0,0);
+	transform.cols[2] = Vec4(1,0,0,0);
+	transform.cols[3] = Vec4(10,20,30,1);
+
+	Mat4 inv = transform.inverse_transform_no_scale();
+
+	Mat4 identity_check = transform * inv;
+
+	float expected_id[16] = {
+		1,0,0,0,
+		0,1,0,0,
+		0,0,1,0,
+		0,0,0,1
+	};
+
+	ExpectMat4Near(identity_check, expected_id, 1e-5f);
+}
+
+TEST(Mat4Test, InverseWithScale){
+	Mat4 scale_mat = Mat4::identity();
+	scale_mat.cols[0] = Vec4(2,0,0,0);
+	scale_mat.cols[1] = Vec4(0,0.5f,0,0);
+	scale_mat.cols[2] = Vec4(0,0,4,0);
+	scale_mat.cols[3] = Vec4(10, -5, 20, 1);
+
+	Mat4 inv = scale_mat.inverse_transform();
+
+	Mat4 res = scale_mat * inv;
+
+	float expected_id[16] = {
+		1,0,0,0,
+		0,1,0,0,
+		0,0,1,0,
+		0,0,0,1
+	};
+
+	ExpectMat4Near(res, expected_id, 1e-5f);
+}
+
+TEST(Mat4Test, RigidBodyBackAndForth){
+	Mat4 T = Mat4::identity();
+	T.cols[3] = Vec4(5,10,15,1);
+
+	float s = 0.7071f;
+	float c = 0.7071f;
+	Mat4 R = Mat4::identity();
+	R.cols[1] = Vec4(0, c, s, 0);
+	R.cols[2] = Vec4(0, -s, c, 0);
+
+	Mat4 M = R * T;
+	Mat4 invM = M.inverse_transform();
+
+	Vec4 point(1,2,3,1);
+	Vec4 transformed = M*point;
+	Vec4 back = invM * transformed;
+
+	EXPECT_TRUE(back.is_close(point, 1e-5f));
+}
+
+TEST(Mat4Test, InversePureTranslation){
+	Mat4 T = Mat4::identity();
+	T.cols[3] = Vec4(100.0f, -50.0f, 25.0f, 1.0f);
+
+	Mat4 inv = T.inverse_transform_no_scale();
+
+	EXPECT_FLOAT_EQ(inv.cols[3].x, -100.0f);
+	EXPECT_FLOAT_EQ(inv.cols[3].y, 50.0f);
+	EXPECT_FLOAT_EQ(inv.cols[3].z, -25.0f);
+
+	Mat4 res = T*inv;
+	float id[16] = {1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1};
+	ExpectMat4Near(res,id);
+}
+
+TEST(Mat4Test, InversePureRotation){
+	Mat4 R = Mat4::identity();
+	R.cols[0] = Vec4(0,1,0,0);
+	R.cols[1] = Vec4(-1,0,0,0);
+	R.cols[2] = Vec4(0,0,1,0);
+
+	Mat4 inv = R.inverse_transform_no_scale();
+
+	EXPECT_FLOAT_EQ(inv.cols[0].y, -1.0f);
+	EXPECT_FLOAT_EQ(inv.cols[1].x, 1.0f);
+
+	Mat4 res = R * inv;
+	float id[16] = {1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1};
+	ExpectMat4Near(res,id);
+}
+
+TEST(Mat4Test, InverseNegativeScale) {
+	Mat4 M = Mat4::identity();
+	M.cols[0] = Vec4(-1, 0, 0, 0);
+	M.cols[3] = Vec4(10, 0, 0, 1);
+
+	Mat4 inv = M.inverse_transform();
+
+	Mat4 res = M * inv;
+	float id[16] = {1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1};
+	ExpectMat4Near(res, id);
+
+	Vec4 p(5, 0, 0, 1);
+	EXPECT_TRUE((inv * (M * p)).is_close(p));
+}
+
+TEST(Mat4Test, InverseFullComplexTransform) {
+	float s = 0.707106f;
+	Mat4 R = Mat4::identity();
+	R.cols[0] = Vec4(s, 0, -s, 0);
+	R.cols[1] = Vec4(0, 1, 0, 0);
+	R.cols[2] = Vec4(s, 0, s, 0);
+
+	Mat4 S = Mat4::identity();
+	S.cols[0] = S.cols[0] * 2.0f;
+	S.cols[1] = S.cols[1] * 0.5f;
+	S.cols[2] = S.cols[2] * 3.0f;
+
+	Mat4 T = Mat4::identity();
+	T.cols[3] = Vec4(10, 20, 30, 1);
+
+	Mat4 M = T * (R * S);
+	Mat4 invM = M.inverse_transform();
+
+	Mat4 res = M * invM;
+	float id[16] = {1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1};
+	ExpectMat4Near(res, id, 1e-4f);
+}

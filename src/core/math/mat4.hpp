@@ -97,6 +97,37 @@ struct Mat4{
 		return result;
 	}
 
+	void inverse_transform_no_scale_(){
+		simd::inverse_transform_no_scale(
+			cols[0].reg,
+			cols[1].reg,
+			cols[2].reg,
+			cols[3].reg
+		);
+	}
+
+	[[nodiscard]] FORCE_INLINE Mat4 inverse_transform_no_scale() const{
+		Mat4 result = *this;
+		result.inverse_transform_no_scale_();
+		return result;
+	}
+
+	void inverse_transform_(){
+		simd::inverse_transform(
+			cols[0].reg,
+			cols[1].reg,
+			cols[2].reg,
+			cols[3].reg
+		);
+	}
+
+	[[nodiscard]] FORCE_INLINE Mat4 inverse_transform() const{
+		Mat4 result = *this;
+		result.inverse_transform_();
+		return result;
+	}
+
+
 	[[nodiscard]] FORCE_INLINE static Mat4 perspective(
 			const float fov_radians,
 			const float aspect,

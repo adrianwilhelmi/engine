@@ -133,6 +133,16 @@ namespace engine::math::simd{
 	#endif
 }
 
+[[nodiscard]] FORCE_INLINE Register div(Register a, Register b){
+	#ifdef ENGINE_SIMD_SSE
+		return _mm_div_ps(a,b);
+	#elif ENGINE_SIMD_NEON
+		return vdivq_f32(a,b);
+	#else
+		return {a.f[0]/b.f[0], a.f[1]/b.f[1], a.f[2]/b.f[2], a.f[3]/b.f[3]};
+	#endif
+}
+
 [[nodiscard]] FORCE_INLINE Register mul(Register a, float s){
 	#ifdef ENGINE_SIMD_SSE
 		return _mm_mul_ps(a, _mm_set1_ps(s));
@@ -396,7 +406,7 @@ template<int Index>
 	#ifdef ENGINE_SIMD_SSE
 		return _mm_shuffle_ps(r,r,_MM_SHUFFLE(Index, Index, Index, Index));
 	#elif ENGINE_SIMD_NEON
-		return vdupq_lane_f32(r, Index);
+		return vdupq_n_f32(vgetq_lane_f32(r, Index));
 	#else
 		static_assert(Index >= 0 && Index < 4, "index oob");
 		float val = r.f[Index];
@@ -436,6 +446,154 @@ FORCE_INLINE void transpose(
 		std::swap(c2.f[3], c3.f[2]);
 
 	#endif
+}
+
+
+// the next 3 functions are inspired by: https://lxjk.github.io/2017/09/03/Fast-4x4-Matrix-Inverse-with-SSE-SIMD-Explained.html
+
+FORCE_INLINE void inverse_transform_no_scale(
+		Register& c0, 
+		Register& c1,
+		Register& c2,
+		Register& c3){
+	// requires input matrix to be transform matrix of scale 1
+
+	Register c3c = c3;
+	Register c2c = c2;
+
+	#ifdef ENGINE_SIMD_SSE
+		__m128 tmp0 = _mm_unpacklo_ps(c0,c1);
+		__m128 tmp1 = _mm_unpackhi_ps(c0,c1);
+
+		c0 = _mm_shuffle_ps(tmp0, c2c, _MM_SHUFFLE(3,0,1,0));
+		c1 = _mm_shuffle_ps(tmp0, c2c, _MM_SHUFFLE(3,1,3,2));
+		c2 = _mm_shuffle_ps(tmp1, c2c, _MM_SHUFFLE(3,2,1,0));
+
+	#elif ENGINE_SIMD_NEON
+		float32x4x2_t zip01 = vzipq_f32(c0,c1);
+
+		c0 = vcombine_f32(
+			vget_low_f32(zip01.val[0]), 
+			vget_low_f32(vdup_n_f32(0.0f))
+		);
+		c0 = vsetq_lane_f32(vgetq_lane_f32(c2c, 0), c0, 2);
+
+		c1 = vcombine_f32(
+			vget_high_f32(zip01.val[0]), 
+			vget_low_f32(vdup_n_f32(0.0f))
+		);
+		c1 = vsetq_lane_f32(vgetq_lane_f32(c2c, 1), c1, 2);
+
+		c2 = vcombine_f32(
+			vget_low_f32(zip01.val[1]), 
+			vget_low_f32(vdup_n_f32(0.0f))
+		);
+		c2 = vsetq_lane_f32(vgetq_lane_f32(c2c, 2), c2, 2);
+
+	#else
+		float x0 = c0.f[0], y0 = c0.f[1], z0 = c0.f[2];
+		float x1 = c1.f[0], y1 = c1.f[1], z1 = c1.f[2];
+		float x2 = c2.f[0], y2 = c2.f[1], z2 = c2.f[2];
+		c0 = {x0,x1,x2, 0.0f};
+		c1 = {y0,y1,y2, 0.0f};
+		c2 = {z0,z1,z2, 0.0f};
+	#endif
+
+	Register tx = splat<0>(c3c);
+	Register ty = splat<1>(c3c);
+	Register tz = splat<2>(c3c);
+
+	Register t_part = mul(c0,tx);
+	t_part = fmadd(c1,ty,t_part);
+	t_part = fmadd(c2,tz,t_part);
+
+	c3 = sub(set(0.0f,0.0f,0.0f,1.0f), t_part);
+}
+
+FORCE_INLINE void inverse_transform(
+		Register& c0, 
+		Register& c1,
+		Register& c2,
+		Register& c3){
+	// requires input matrix to be transform matrix
+
+	Register c3c = c3;
+	Register one = set1(1.0f);
+	Register eps = set1(1e-8f);
+
+	Register c2c = c2;
+
+	#ifdef ENGINE_SIMD_SSE
+		__m128 tmp0 = _mm_unpacklo_ps(c0,c1);
+		__m128 tmp1 = _mm_unpackhi_ps(c0,c1);
+
+		c0 = _mm_shuffle_ps(tmp0, c2c, _MM_SHUFFLE(3,0,1,0));
+		c1 = _mm_shuffle_ps(tmp0, c2c, _MM_SHUFFLE(3,1,3,2));
+		c2 = _mm_shuffle_ps(tmp1, c2c, _MM_SHUFFLE(3,2,1,0));
+
+	#elif ENGINE_SIMD_NEON
+		float32x4x2_t zip01 = vzipq_f32(c0,c1);
+
+		c0 = vcombine_f32(
+			vget_low_f32(zip01.val[0]), 
+			vget_low_f32(vdup_n_f32(0.0f))
+		);
+		c0 = vsetq_lane_f32(vgetq_lane_f32(c2c, 0), c0, 2);
+
+		c1 = vcombine_f32(
+			vget_high_f32(zip01.val[0]), 
+			vget_low_f32(vdup_n_f32(0.0f))
+		);
+		c1 = vsetq_lane_f32(vgetq_lane_f32(c2c, 1), c1, 2);
+
+		c2 = vcombine_f32(
+			vget_low_f32(zip01.val[1]), 
+			vget_low_f32(vdup_n_f32(0.0f))
+		);
+		c2 = vsetq_lane_f32(vgetq_lane_f32(c2c, 2), c2, 2);
+
+	#else
+		float x0 = c0.f[0], y0 = c0.f[1], z0 = c0.f[2];
+		float x1 = c1.f[0], y1 = c1.f[1], z1 = c1.f[2];
+		float x2 = c2.f[0], y2 = c2.f[1], z2 = c2.f[2];
+		c0 = {x0,x1,x2, 0.0f};
+		c1 = {y0,y1,y2, 0.0f};
+		c2 = {z0,z1,z2, 0.0f};
+	#endif
+
+	Register size_sqr = mul(c0,c0);
+	size_sqr = fmadd(c1,c1,size_sqr);
+	size_sqr = fmadd(c2,c2,size_sqr);
+
+	//Register safe_size_sqr = max(size_sqr, eps);
+	//Register r_size_sqr = div(one, safe_size_sqr);
+
+	#ifdef ENGINE_SIMD_SSE
+		__m128 mask = _mm_cmplt_ps(size_sqr, eps);
+		Register r_size_sqr = _mm_blendv_ps(_mm_div_ps(one, size_sqr), one, mask);
+	#elif ENGINE_SIMD_NEON
+		uint32x4_t mask = vcltq_f32(size_sqr, eps);
+		Register r_size_sqr = vbslq_f32(mask, one, vdivq_f32(one, size_sqr));
+	#else
+		Register r_size_sqr;
+		for(int i=0; i<3; ++i) 
+			r_size_sqr.f[i] = (size_sqr.f[i] < 1e-8) ? 1.0f : 1.0f / size_sqr.f[i];
+		r_size_sqr.f[3] = 1.0f;
+	#endif
+
+	c0 = mul(c0, r_size_sqr);
+	c1 = mul(c1, r_size_sqr);
+	c2 = mul(c2, r_size_sqr);
+
+	Register tx = splat<0>(c3c);
+	Register ty = splat<1>(c3c);
+	Register tz = splat<2>(c3c);
+
+	Register t_part = mul(c0, tx);
+	t_part = fmadd(c1, ty, t_part);
+	t_part = fmadd(c2, tz, t_part);
+
+	c3 = sub(set(0.0f, 0.0f, 0.0f, 1.0f), t_part);
 }
 
 } // namespace engine::math::simd
