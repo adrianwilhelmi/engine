@@ -433,3 +433,87 @@ TEST(Mat4Test, InverseFullComplexTransform) {
 	float id[16] = {1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1};
 	ExpectMat4Near(res, id, 1e-4f);
 }
+
+TEST(Mat4Test, InverseGeneralMatrix){
+	Mat4 M(
+		Vec4(1,2,0,0),
+		Vec4(0,3,0,0),
+		Vec4(1,0,1,1),
+		Vec4(0,0,2,1)
+	);
+
+	Mat4 inv = M.inverse();
+	Mat4 res = M*inv;
+
+	float id[16] = {1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1};
+	ExpectMat4Near(res, id, 1e-5);
+
+}
+
+TEST(Mat4Test, InverseProperty){
+	// (A*B)^(-1) = B^(-1) * A^(-1)
+	
+	Mat4 A = Mat4::identity();
+	A.cols[3] = Vec4(1,2,3,1);
+
+	Mat4 B = Mat4::identity();
+	B.cols[0] = Vec4(2,0,0,0);
+	B.cols[1] = Vec4(0,2,0,0);
+	B.cols[2] = Vec4(0,0,2,0);
+
+	Mat4 invAB = (A*B).inverse();
+	Mat4 invB_invA = B.inverse() * A.inverse();
+
+	for(int i = 0; i < 4; ++i){
+		EXPECT_TRUE(invAB.cols[i].is_close(invB_invA.cols[i], 1e-5f))
+			<< "Asoociativity failed at column " << i;
+	}
+}
+
+TEST(Mat4Test, InverseIdentity) {
+	Mat4 id = Mat4::identity();
+	Mat4 inv = id.inverse();
+
+	float expected[16] = {1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1};
+	ExpectMat4Near(inv, expected);
+}
+
+TEST(Mat4Test, InverseSimple){
+	Mat4 M = Mat4::identity();
+	M.cols[0].x = 1.0f;
+	M.cols[1].y = 2.0f;
+	M.cols[2].z = 4.0f;
+	M.cols[3].w = 8.0f;
+
+	Mat4 inv = M.inverse();
+
+	EXPECT_FLOAT_EQ(inv.cols[0].x, 1.0f);
+	EXPECT_FLOAT_EQ(inv.cols[1].y, 0.5f);
+	EXPECT_FLOAT_EQ(inv.cols[2].z, 0.25f);
+	EXPECT_FLOAT_EQ(inv.cols[3].w, 0.125f);
+}
+
+TEST(Mat4Test, InverseSingularMatrix) {
+	Mat4 M = Mat4::identity();
+	M.cols[0] = Vec4(0, 0, 0, 0); 
+
+	Mat4 inv = M.inverse();
+
+	EXPECT_TRUE(std::isnan(inv.cols[0].x) || std::isinf(inv.cols[0].x));
+}
+
+TEST(Mat4Inverse, RotationX) {
+	float angle = 0.523599f; // 30 deg
+	float s = std::sin(angle);
+	float c = std::cos(angle);
+
+	Mat4 R = Mat4::identity();
+	R.cols[0] = Vec4(c, s, 0, 0);
+	R.cols[1] = Vec4(-s, c, 0,0);
+
+	Mat4 invR = R.inverse();
+	Mat4 res = R * invR;
+
+	float identity[16] = {1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1};
+	ExpectMat4Near(res, identity, 1e-6f);
+}

@@ -596,4 +596,239 @@ FORCE_INLINE void inverse_transform(
 	c3 = sub(set(0.0f, 0.0f, 0.0f, 1.0f), t_part);
 }
 
+namespace util{
+
+// 2x2 matmul A*B
+FORCE_INLINE Register mat2_mul(Register vec1, Register vec2){
+	#ifdef ENGINE_SIMD_SSE
+		Register t1 = mul(vec1, _mm_shuffle_ps(vec2, vec2, _MM_SHUFFLE(1,1,0,0)));
+		Register t2 = mul(
+			_mm_shuffle_ps(vec1, vec1, _MM_SHUFFLE(1,0,3,2)),
+			_mm_shuffle_ps(vec2, vec2, _MM_SHUFFLE(3,3,2,2))
+		);
+		return add(t1,t2);
+	#elif ENGINE_SIMD_NEON
+		Register t1 = mul(vec1, vdupq_lane_f32(vget_low_f32(vec2), 0));
+		float32x4_t xxxx = vdupq_laneq_f32(vec2, 0);
+		float32x4_t yyyy = vdupq_laneq_f32(vec2, 1);
+		float32x4_t zzzz = vdupq_laneq_f32(vec2, 2);
+		float32x4_t wwww = vdupq_laneq_f32(vec2, 3);
+		float32x4_t acac = vcombine_f32(vget_low_f32(vec1), vget_low_f32(vec1));
+		Register res_lo = vaddq_f32(vmulq_f32(vget_low_f32(vec1), vget_low_f32(xxxx)), vmulq_f32(vget_high_f32(vec1), vget_low_f32(yyyy)));
+		Register res_hi = vaddq_f32(vmulq_f32(vget_low_f32(vec1), vget_low_f32(zzzz)), vmulq_f32(vget_high_f32(vec1), vget_low_f32(wwww)));
+        return vcombine_f32(res_lo, res_hi);
+	#else
+		Register r;
+		r.f[0] = vec1.f[0] * vec2.f[0] + vec1.f[2] * vec2.f[1];
+		r.f[1] = vec1.f[1] * vec2.f[0] + vec1.f[3] * vec2.f[1];
+		r.f[2] = vec1.f[0] * vec2.f[2] + vec1.f[2] * vec2.f[3];
+		r.f[3] = vec1.f[1] * vec2.f[2] + vec1.f[3] * vec2.f[3];
+		return r;
+	#endif
+}
+
+// Adjugate(A) * B
+FORCE_INLINE Register mat2_adj_mul(Register vec1, Register vec2){
+	#ifdef ENGINE_SIMD_SSE
+		return sub(
+			mul(_mm_shuffle_ps(vec1, vec1, _MM_SHUFFLE(0,3,0,3)),vec2),
+			mul(
+				_mm_shuffle_ps(vec1, vec1, _MM_SHUFFLE(1,2,1,2)), 
+				_mm_shuffle_ps(vec2, vec2, _MM_SHUFFLE(2,3,0,1))
+		   )
+		);
+	#else
+		Register r;
+		r.f[0] = vec1.f[3] * vec2.f[0] - vec1.f[2] * vec2.f[1];
+		r.f[1] = -vec1.f[1] * vec2.f[0] + vec1.f[0] * vec2.f[1];
+		r.f[2] = vec1.f[3] * vec2.f[2] - vec1.f[2] * vec2.f[3];
+		r.f[3] = -vec1.f[1] * vec2.f[2] + vec1.f[0] * vec2.f[3];
+		return r;
+	#endif
+}
+
+// A * Adjugate(B)
+FORCE_INLINE Register mat2_mul_adj(Register vec1, Register vec2){
+	#ifdef ENGINE_SIMD_SSE
+		return sub(
+			mul(vec1, _mm_shuffle_ps(vec2, vec2, _MM_SHUFFLE(0, 0, 3, 3))),
+			mul(
+				_mm_shuffle_ps(vec1, vec1, _MM_SHUFFLE(1, 0, 3, 2)),
+				_mm_shuffle_ps(vec2, vec2, _MM_SHUFFLE(2, 2, 1, 1))
+			)
+		);
+	#else
+		Register r;
+		r.f[0] =  vec1.f[0] * vec2.f[3] - vec1.f[2] * vec2.f[1];
+		r.f[1] =  vec1.f[1] * vec2.f[3] - vec1.f[3] * vec2.f[1];
+		r.f[2] = -vec1.f[0] * vec2.f[2] + vec1.f[2] * vec2.f[0];
+		r.f[3] = -vec1.f[1] * vec2.f[2] + vec1.f[3] * vec2.f[0];
+		return r;
+	#endif
+}
+
+};	// namespace util
+
+
+FORCE_INLINE void inverse(
+		Register& c0,
+		Register& c1,
+		Register& c2,
+		Register& c3){
+
+	// submatrices
+	#ifdef ENGINE_SIMD_SSE
+		Register A = _mm_shuffle_ps(c0, c1, _MM_SHUFFLE(1, 0, 1, 0));
+		Register C = _mm_shuffle_ps(c0, c1, _MM_SHUFFLE(3, 2, 3, 2));
+		Register B = _mm_shuffle_ps(c2, c3, _MM_SHUFFLE(1, 0, 1, 0));
+		Register D = _mm_shuffle_ps(c2, c3, _MM_SHUFFLE(3, 2, 3, 2));
+
+	#elif ENGINE_SIMD_NEON
+		Register A = vcombine_f32(vget_low_f32(c0), vget_low_f32(c1));
+		Register B = vcombine_f32(vget_high_f32(c0), vget_high_f32(c1));
+		Register C = vcombine_f32(vget_low_f32(c2), vget_low_f32(c3));
+		Register D = vcombine_f32(vget_high_f32(c2), vget_high_f32(c3));
+
+	#else
+		Register A = {c0.f[0], c0.f[1], c1.f[0], c1.f[1]};
+		Register C = {c0.f[2], c0.f[3], c1.f[2], c1.f[3]};
+		Register B = {c2.f[0], c2.f[1], c3.f[0], c3.f[1]};
+		Register D = {c2.f[2], c2.f[3], c3.f[2], c3.f[3]};
+	#endif
+
+
+	// submatrices determinants, det_sub = {|A|, |B|, |C|, |D|}
+	#ifdef ENGINE_SIMD_SSE
+		Register det_sub = sub(
+			mul(
+				_mm_shuffle_ps(c0,c2, _MM_SHUFFLE(2,0,2,0)),
+				_mm_shuffle_ps(c1, c3, _MM_SHUFFLE(3,1,3,1))
+			),
+			mul(
+				_mm_shuffle_ps(c0,c2, _MM_SHUFFLE(3,1,3,1)),
+				_mm_shuffle_ps(c1,c3, _MM_SHUFFLE(2,0,2,0))
+			)
+		);
+
+	#elif ENGINE_SIMD_NEON
+		float32x4_t c02_lo = vsetq_lane_f32(
+			vgetq_lane_f32(c2, 0), 
+			vsetq_lane_f32(vgetq_lane_f32(c0, 0), vdupq_n_f32(0), 0), 
+			2
+		);
+		c02_lo = vsetq_lane_f32(vgetq_lane_f32(c0, 2), c02_lo, 1);
+		c02_lo = vsetq_lane_f32(vgetq_lane_f32(c2, 2), c02_lo, 3);
+
+		float32x4_t c13_hi = vsetq_lane_f32(
+			vgetq_lane_f32(c3, 1), 
+			vsetq_lane_f32(vgetq_lane_f32(c1, 1), vdupq_n_f32(0), 0), 
+			2
+		);
+		c13_hi = vsetq_lane_f32(vgetq_lane_f32(c1, 3), c13_hi, 1);
+		c13_hi = vsetq_lane_f32(vgetq_lane_f32(c3, 3), c13_hi, 3);
+
+		float32x4_t c02_hi = vsetq_lane_f32(
+			vgetq_lane_f32(c2, 1), 
+			vsetq_lane_f32(vgetq_lane_f32(c0, 1), vdupq_n_f32(0), 0), 
+			2
+		);
+		c02_hi = vsetq_lane_f32(vgetq_lane_f32(c0, 3), c02_hi, 1);
+		c02_hi = vsetq_lane_f32(vgetq_lane_f32(c2, 3), c02_hi, 3);
+
+		float32x4_t c13_lo = vsetq_lane_f32(
+			vgetq_lane_f32(c3, 0), 
+			vsetq_lane_f32(vgetq_lane_f32(c1, 0), vdupq_n_f32(0), 0), 
+			2
+		);
+		c13_lo = vsetq_lane_f32(vgetq_lane_f32(c1, 2), c13_lo, 1);
+		c13_lo = vsetq_lane_f32(vgetq_lane_f32(c3, 2), c13_lo, 3);
+
+		Register det_sub = vsubq_f32(
+			vmulq_f32(c02_lo, c13_hi), 
+			vmulq_f32(c02_hi, c13_lo)
+		);
+
+	#else
+		Register det_sub = set(
+			A.f[0]*A.f[3] - A.f[1]*A.f[2],
+			C.f[0]*C.f[3] - C.f[1]*C.f[2],
+			B.f[0]*B.f[3] - B.f[1]*B.f[2],
+			D.f[0]*D.f[3] - D.f[1]*D.f[2]
+		);
+	#endif
+
+	
+	Register detA = splat<0>(det_sub);
+	Register detB = splat<2>(det_sub);
+	Register detC = splat<1>(det_sub);
+	Register detD = splat<3>(det_sub);
+
+	Register D_C = util::mat2_adj_mul(D,C);
+	Register A_B = util::mat2_adj_mul(A,B);
+	Register X_ = sub(mul(detD, A), util::mat2_mul(B, D_C));
+	Register W_ = sub(mul(detA, D), util::mat2_mul(C, A_B));
+	Register Y_ = sub(mul(detB, C), util::mat2_mul_adj(D, A_B));
+	Register Z_ = sub(mul(detC, B), util::mat2_mul_adj(A, D_C));
+
+	// main determinant
+	Register detM = add(mul(detA, detD), mul(detB, detC));
+	float tr_val;
+
+	#ifdef ENGINE_SIMD_SSE
+		Register tr = mul(A_B, _mm_shuffle_ps(D_C, D_C, _MM_SHUFFLE(3,1,2,0)));
+		Register tr_sum = _mm_hadd_ps(tr, tr);
+		tr_sum = _mm_hadd_ps(tr_sum, tr_sum);
+		tr_val = _mm_cvtss_f32(tr_sum);
+
+	#elif ENGINE_SIMD_NEON
+		Register tr = mul(
+			A_B, 
+			vsetq_lane_f32(
+				vgetq_lane_f32(D_C, 3), 
+				vsetq_lane_f32(vgetq_lane_f32(D_C, 1), 
+					vsetq_lane_f32(vgetq_lane_f32(D_C, 2), 
+					vsetq_lane_f32(vgetq_lane_f32(D_C, 0), 
+					vdupq_n_f32(0), 0), 1), 2
+				),
+				3
+			)
+		);
+		tr_val = vaddvq_f32(tr);
+	#else
+		Register tr = mul(A_B, set(D_C.f[0], D_C.f[2], D_C.[1], D_C.f[3]));
+		tr_val = tr.f[0] + tr.f[1] + tr.f[2] + tr.f[3];
+	#endif
+	
+	detM = sub(detM, set1(tr_val));
+
+	Register r_detM = div(set1(1.0f), detM);
+	Register final_factor = mul(set(1.f, -1.f, -1.f, 1.f), r_detM);
+
+	X_ = mul(X_, final_factor);
+	Y_ = mul(Y_, final_factor);
+	Z_ = mul(Z_, final_factor);
+	W_ = mul(W_, final_factor);
+
+	#ifdef ENGINE_SIMD_SSE
+		c0 = _mm_shuffle_ps(X_, Z_, _MM_SHUFFLE(1,3,1,3));
+		c1 = _mm_shuffle_ps(X_, Z_, _MM_SHUFFLE(0,2,0,2));
+		c2 = _mm_shuffle_ps(Y_, W_, _MM_SHUFFLE(1,3,1,3));
+		c3 = _mm_shuffle_ps(Y_, W_, _MM_SHUFFLE(0,2,0,2));
+
+	#elif ENGINE_SIMD_NEON
+		c0 = vsetq_lane_f32(vgetq_lane_f32(X_, 3), vsetq_lane_f32(vgetq_lane_f32(X_, 1), vsetq_lane_f32(vgetq_lane_f32(Z_, 3), vsetq_lane_f32(vgetq_lane_f32(Z_, 1), vdupq_n_f32(0), 2), 3), 0), 1);
+		c1 = vsetq_lane_f32(vgetq_lane_f32(X_, 2), vsetq_lane_f32(vgetq_lane_f32(X_, 0), vsetq_lane_f32(vgetq_lane_f32(Z_, 2), vsetq_lane_f32(vgetq_lane_f32(Z_, 0), vdupq_n_f32(0), 2), 3), 0), 1);
+		c2 = vsetq_lane_f32(vgetq_lane_f32(Y_, 3), vsetq_lane_f32(vgetq_lane_f32(Y_, 1), vsetq_lane_f32(vgetq_lane_f32(W_, 3), vsetq_lane_f32(vgetq_lane_f32(W_, 1), vdupq_n_f32(0), 2), 3), 0), 1);
+		c3 = vsetq_lane_f32(vgetq_lane_f32(Y_, 2), vsetq_lane_f32(vgetq_lane_f32(Y_, 0), vsetq_lane_f32(vgetq_lane_f32(W_, 2), vsetq_lane_f32(vgetq_lane_f32(W_, 0), vdupq_n_f32(0), 2), 3), 0), 1);
+
+	#else
+		c0 = set(X_.f[3], X_.f[1], Z_.f[3], Z_.f[1]);
+		c1 = set(X_.f[2], X_.f[0], Z_.f[2], Z_.f[0]);
+		c2 = set(Y_.f[3], Y_.f[1], W_.f[3], W_.f[1]);
+		c3 = set(Y_.f[2], Y_.f[0], W_.f[2], W_.f[0]);
+
+	#endif
+}
+
+
 } // namespace engine::math::simd
