@@ -795,7 +795,7 @@ FORCE_INLINE void inverse(
 		);
 		tr_val = vaddvq_f32(tr);
 	#else
-		Register tr = mul(A_B, set(D_C.f[0], D_C.f[2], D_C.[1], D_C.f[3]));
+		Register tr = mul(A_B, set(D_C.f[0], D_C.f[2], D_C.f[1], D_C.f[3]));
 		tr_val = tr.f[0] + tr.f[1] + tr.f[2] + tr.f[3];
 	#endif
 	
