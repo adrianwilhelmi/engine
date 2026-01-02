@@ -517,3 +517,101 @@ TEST(Mat4Inverse, RotationX) {
 	float identity[16] = {1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1};
 	ExpectMat4Near(res, identity, 1e-6f);
 }
+
+TEST(Mat4Test, InverseGeneralMatrix2){
+	Mat4 M = Mat4::identity();
+	M.cols[0] = Vec4(3.0f, 1.0f, 2.0f, 1.0f);
+	M.cols[1] = Vec4(2.0f, 0.0f, 1.0f, 1.0f);
+	M.cols[2] = Vec4(-1.0f, 1.0f, 1.0f, 1.0f);
+	M.cols[3] = Vec4(1.0f, 2.0f, -1.0f, 0.0f);
+
+	Mat4 inv = M.inverse();
+	Mat4 res = M * inv;
+
+	float identity[16] = {1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1};
+	ExpectMat4Near(res, identity, 1e-6f);
+}
+
+TEST(Mat4Test, InverseGeneralMatrix3){
+	Mat4 M = Mat4::identity();
+	M.cols[0] = Vec4(1.0f, 0.0f, 2.0f, 2.0f);
+	M.cols[1] = Vec4(0.0f, 2.0f, 1.0f, 0.0f);
+	M.cols[2] = Vec4(0.0f, 1.0f, 0.0f, 1.0f);
+	M.cols[3] = Vec4(1.0f, 2.0f, 1.0f, 4.0f);
+
+	Mat4 inv = M.inverse();
+	Mat4 res = M * inv;
+
+	float identity[16] = {1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1};
+	ExpectMat4Near(res, identity, 1e-6f);
+}
+
+TEST(Mat4Test, InverseGeneralMatrix4){
+	Mat4 M = Mat4::identity();
+	M.cols[0] = Vec4(2.0f, 1.0f, 7.0f, 1.0f);
+	M.cols[1] = Vec4(5.0f, 4.0f, 8.0f, 5.0f);
+	M.cols[2] = Vec4(0.0f, 2.0f, 9.0f, 7.0f);
+	M.cols[3] = Vec4(8.0f, 6.0f, 3.0f, 8.0f);
+
+	Mat4 inv = M.inverse();
+	Mat4 res = M * inv;
+
+	float identity[16] = {1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1};
+	ExpectMat4Near(res, identity, 1e-6f);
+}
+
+TEST(Mat4Test, InverseGeneralMatrix5){
+	Mat4 M = Mat4::identity();
+	M.cols[0] = Vec4(5.0f, 0.0f, 0.0f, -1.0f);
+	M.cols[1] = Vec4(6.0f, -1.0f, 0.0f, 0.0f);
+	M.cols[2] = Vec4(6.0f, -4.0f, 2.0f, 0.0f);
+	M.cols[3] = Vec4(-1.0f, 0.0f, 0.0f, -12.0f);
+
+	Mat4 inv = M.inverse();
+	Mat4 res = M * inv;
+
+	float identity[16] = {1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1};
+	ExpectMat4Near(res, identity, 1e-6f);
+}
+
+TEST(Mat4Test, InverseGeneralMatrix6){
+	Mat4 M = Mat4::identity();
+	M.cols[0] = Vec4(4.0f, 2.0f, 2.0f, 2.0f);
+	M.cols[1] = Vec4(2.0f, 1.0f, 4.0f, 1.0f);
+	M.cols[2] = Vec4(-1.0f, 2.0f, 1.0f, 2.0f);
+	M.cols[3] = Vec4(3.0f, -1.0f, 1.0f, 1.0f);
+
+	Mat4 inv = M.inverse();
+	Mat4 res = M * inv;
+
+	float identity[16] = {1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1};
+	ExpectMat4Near(res, identity, 1e-6f);
+}
+
+TEST(Mat4Test, InverseGeneralMatrix7){
+	Mat4 M = Mat4::identity();
+	M.cols[0] = Vec4(1.0f, 1.0f, 1.0f, -1.0f);
+	M.cols[1] = Vec4(1.0f, 1.0f, -1.0f, 1.0f);
+	M.cols[2] = Vec4(1.0f, -1.0f, 1.0f, 1.0f);
+	M.cols[3] = Vec4(-1.0f, 1.0f, 1.0f, 1.0f);
+
+	Mat4 inv = M.inverse();
+	Mat4 res = M * inv;
+
+	float identity[16] = {1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1};
+	ExpectMat4Near(res, identity, 1e-6f);
+}
+
+TEST(Mat4Test, InverseGeneralMatrix8){
+	Mat4 M = Mat4::identity();
+	M.cols[0] = Vec4(1.0f, 3.0f, 4.0f, 2.0f);
+	M.cols[1] = Vec4(2.0f, 4.0f, 2.0f, 3.0f);
+	M.cols[2] = Vec4(4.0f, 0.0f, 1.0f, 2.0f);
+	M.cols[3] = Vec4(2.0f, 1.0f, 1.0f, 4.0f);
+
+	Mat4 inv = M.inverse();
+	Mat4 res = M * inv;
+
+	float identity[16] = {1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1};
+	ExpectMat4Near(res, identity, 1e-6f);
+}

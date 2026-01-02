@@ -601,10 +601,10 @@ namespace util{
 // 2x2 matmul A*B
 FORCE_INLINE Register mat2_mul(Register vec1, Register vec2){
 	#ifdef ENGINE_SIMD_SSE
-		Register t1 = mul(vec1, _mm_shuffle_ps(vec2, vec2, _MM_SHUFFLE(1,1,0,0)));
+		Register t1 = mul(vec1, _mm_shuffle_ps(vec2, vec2, _MM_SHUFFLE(3,3,0,0)));
 		Register t2 = mul(
 			_mm_shuffle_ps(vec1, vec1, _MM_SHUFFLE(1,0,3,2)),
-			_mm_shuffle_ps(vec2, vec2, _MM_SHUFFLE(3,3,2,2))
+			_mm_shuffle_ps(vec2, vec2, _MM_SHUFFLE(2,2,1,1))
 		);
 		return add(t1,t2);
 	#elif ENGINE_SIMD_NEON
@@ -765,6 +765,7 @@ FORCE_INLINE void inverse(
 
 	Register D_C = util::mat2_adj_mul(D,C);
 	Register A_B = util::mat2_adj_mul(A,B);
+
 	Register X_ = sub(mul(detD, A), util::mat2_mul(B, D_C));
 	Register W_ = sub(mul(detA, D), util::mat2_mul(C, A_B));
 	Register Y_ = sub(mul(detB, C), util::mat2_mul_adj(D, A_B));
@@ -801,13 +802,13 @@ FORCE_INLINE void inverse(
 	
 	detM = sub(detM, set1(tr_val));
 
-	Register r_detM = div(set1(1.0f), detM);
-	Register final_factor = mul(set(1.f, -1.f, -1.f, 1.f), r_detM);
+	Register adj_sign_mask = set(1.f, -1.f, -1.f, 1.f);
+	Register r_detM = div(adj_sign_mask, detM);
 
-	X_ = mul(X_, final_factor);
-	Y_ = mul(Y_, final_factor);
-	Z_ = mul(Z_, final_factor);
-	W_ = mul(W_, final_factor);
+	X_ = mul(X_, r_detM);
+	Y_ = mul(Y_, r_detM);
+	Z_ = mul(Z_, r_detM);
+	W_ = mul(W_, r_detM);
 
 	#ifdef ENGINE_SIMD_SSE
 		c0 = _mm_shuffle_ps(X_, Z_, _MM_SHUFFLE(1,3,1,3));
