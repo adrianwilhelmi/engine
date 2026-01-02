@@ -2,6 +2,8 @@
 
 #include<iostream>
 #include<iomanip>
+#include<cassert>
+#include<cstdint>
 
 #include"simd_backend.hpp"
 #include"vec3packed.hpp"
@@ -82,6 +84,16 @@ struct alignas(16) Vec3{
 	FORCE_INLINE Vec3& operator*=(const float scalar){
 		reg = simd::mul(reg, scalar);
 		return *this;
+	}
+
+	FORCE_INLINE const float& operator[](uint16_t i) const {
+		assert(i < 3 && "index oob for Vec3");
+		return (&x)[i];
+	}
+
+	FORCE_INLINE float& operator[](uint16_t i) {
+		assert(i < 3 && "index oob for Vec3");
+		return (&x)[i];
 	}
 
 	[[nodiscard]] FORCE_INLINE float dot(const Vec3& other) const{

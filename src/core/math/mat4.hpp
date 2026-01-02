@@ -3,22 +3,25 @@
 #include<iostream>
 #include<cmath>
 #include<vector>
+#include<cstdint>
+#include<iomanip>
 
 #include"vec4.hpp"
+#include"vec3.hpp"
 
 namespace engine::math{
 
-struct Mat4{
+struct alignas(16) Mat4{
 	Vec4 cols[4];
 
-	Mat4(){
+	FORCE_INLINE Mat4(){
 		cols[0] = Vec4{1.0f, 0.0f, 0.0f, 0.0f};
 		cols[1] = Vec4{0.0f, 1.0f, 0.0f, 0.0f};
 		cols[2] = Vec4{0.0f, 0.0f, 1.0f, 0.0f};
 		cols[3] = Vec4{0.0f, 0.0f, 0.0f, 1.0f};
 	}
 
-	Mat4(
+	FORCE_INLINE Mat4(
 			const Vec4& col0,
 			const Vec4& col1,
 			const Vec4& col2,
@@ -29,11 +32,11 @@ struct Mat4{
 		cols[3] = col3;
 	}
 
-	static Mat4 identity(){
+	FORCE_INLINE static Mat4 identity(){
 		return Mat4();
 	}
 
-	Mat4(const std::vector<float>& vec){
+	FORCE_INLINE Mat4(const std::vector<float>& vec){
 		for(int i = 0; i < 4; ++i){
 			cols[i] = Vec4(
 				vec[i*4 + 0],
@@ -44,7 +47,7 @@ struct Mat4{
 		}
 	}
 
-	Mat4(const float* vec){
+	FORCE_INLINE Mat4(const float* vec){
 		for(int i = 0; i < 4; ++i){
 			cols[i] = Vec4{
 				vec[i*4 + 0],
@@ -84,10 +87,26 @@ struct Mat4{
 		return res;
 	}
 
-	Vec4 operator*(const Vec4& v) const {return mul(*this,v);}
-	Mat4 operator*(const Mat4& m) const {return matmul(*this,m);}
+	[[nodiscard]] FORCE_INLINE Vec4 operator*(const Vec4& v) const {
+		return mul(*this,v);
+	}
 
-	void transpose_(){
+	[[nodiscard]] FORCE_INLINE Mat4 operator*(const Mat4& m) const {
+		return matmul(*this,m);
+	}
+
+	[[nodiscard]] FORCE_INLINE Mat4 operator+(const Mat4& other) const{
+		Mat4 res;
+		for(uint16_t i = 0; i < 4; ++i){
+			res.cols[i] = cols[i] + other.cols[i];
+		}
+		return res;
+	}
+
+	FORCE_INLINE const Vec4& operator[](uint16_t i) const {return cols[i]; }
+	FORCE_INLINE Vec4& operator[](uint16_t i) {return cols[i]; }
+
+	FORCE_INLINE void transpose_(){
 		simd::transpose(cols[0].reg, cols[1].reg, cols[2].reg, cols[3].reg);
 	}
 
@@ -97,7 +116,7 @@ struct Mat4{
 		return result;
 	}
 
-	void inverse_transform_no_scale_(){
+	FORCE_INLINE void inverse_transform_no_scale_(){
 		// works only if this matrix is transformation matrix with scale 1
 		simd::inverse_transform_no_scale(
 			cols[0].reg,
@@ -114,7 +133,7 @@ struct Mat4{
 		return result;
 	}
 
-	void inverse_transform_(){
+	FORCE_INLINE void inverse_transform_(){
 		// works only if this matrix is transformation matrix
 		simd::inverse_transform(
 			cols[0].reg,
@@ -131,7 +150,7 @@ struct Mat4{
 		return result;
 	}
 
-	void inverse_(){
+	FORCE_INLINE void inverse_(){
 		// works for any matrix
 		simd::inverse(
 			cols[0].reg,
@@ -165,6 +184,60 @@ struct Mat4{
 			Vec4(0.0f,	0.0f,	b,		0.0f)
 		);
 	}
+
+	[[nodiscard]] FORCE_INLINE const float* data() const{
+		return &cols[0].x;
+	}
+
+	[[nodiscard]] static Mat4 look_at(
+			const Vec3& eye,
+			const Vec3& center,
+			const Vec3& up){
+		Vec3 f = (center - eye).normalized();
+		Vec3 s = f.cross(up).normalized();
+		Vec3 u = s.cross(f);
+
+		Mat4 res;
+
+		res.cols[0] = Vec4(s.x, u.x, -f.x, 0.0f);
+		res.cols[1] = Vec4(s.y, u.y, -f.y, 0.0f);
+		res.cols[2] = Vec4(s.z, u.z, -f.z, 0.0f);
+
+		Vec4 eye4(eye);
+		Vec4 translation = mul(res, eye4);
+
+		res.cols[3] = translation * Vec4(-1.0f, -1.0f, -1.0f, 0.0f);
+		res.cols[3].w = 1.0f;
+
+		return res;
+	}
+
+	[[nodiscard]] FORCE_INLINE static Mat4 translate(const Vec3& v){
+		Mat4 res = Mat4::identity();
+		res.cols[3] = Vec4(v.x, v.y, v.z, 1.0f);
+		return res;
+	}
+
+	[[nodiscard]] FORCE_INLINE static Mat4 scale(const Vec3& v){
+		return Mat4(
+			Vec4(v.x, 0.0f, 0.0f, 0.0f),
+			Vec4(0.0f, v.y, 0.0f, 0.0f),
+			Vec4(0.0f, 0.0f, v.z, 0.0f),
+			Vec4(0.0f, 0.0f, 0.0f, 1.0f)
+		);
+	}
 };
+
+inline std::ostream& operator <<(std::ostream& os, const Mat4& m){
+	os << std::fixed << std::setprecision(3);
+	for(uint16_t i = 0; i < 4; ++i){
+		os << "| ";
+		for(uint16_t j = 0; j < 4; ++j){
+			os << m[j][i] << (j == 3 ? "" : " ");
+		}
+		os << " |\n";
+	}
+	return os;
+}
 
 } // namespace engine::math
