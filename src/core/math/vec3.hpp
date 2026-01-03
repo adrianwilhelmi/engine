@@ -47,7 +47,7 @@ struct alignas(16) Vec3{
 	FORCE_INLINE explicit Vec3(simd::Register r) : reg(r) {}
 
 	[[nodiscard]] FORCE_INLINE Vec3Packed pack() const{
-		return Vec3Packed(x,y,z);
+		return Vec3Packed(get_x(),get_y(),get_z());
 	};
 
 	[[nodiscard]] FORCE_INLINE float get_x() const{
@@ -84,7 +84,7 @@ struct alignas(16) Vec3{
 	}
 
 	[[nodiscard]] FORCE_INLINE Vec3 operator-() const{
-		return Vec3(simd::sub(simd::set1(0.0f), reg));
+		return Vec3(simd::neg(reg));
 	}
 
 	[[nodiscard]] FORCE_INLINE Vec3 operator*(const float scalar) const{
@@ -110,11 +110,11 @@ struct alignas(16) Vec3{
 		return *this;
 	}
 
-	FORCE_INLINE const float& operator[](int i) const {
+	// USE OPERATOR [] ONLY FOR DEBUG .. INEFFICIENT
+	FORCE_INLINE float operator[](int i) const {
 		assert(i < 3 && "index oob for Vec3");
 		return (&x)[i];
 	}
-
 	FORCE_INLINE float& operator[](int i) {
 		assert(i < 3 && "index oob for Vec3");
 		return (&x)[i];
@@ -183,7 +183,7 @@ static_assert(offsetof(Vec3,Vec3::y) == sizeof(float), "Vec3: Gap between x and 
 static_assert(offsetof(Vec3,Vec3::z) == 2*sizeof(float), "Vec3: Gap between y and z");
 
 inline std::ostream& operator<<(std::ostream& os, const Vec3& v){
-	os << "Vec3(\n\t" << v.x << ",\n\t" << v.y << ",\n\t" << v.z << "\n)\n";
+	os << "Vec3(\n\t" << v.get_x() << ",\n\t" << v.get_y() << ",\n\t" << v.get_z() << "\n)\n";
 	return os;
 }
 

@@ -3,7 +3,6 @@
 namespace engine::math{
 
 struct Vec3Packed{
-	
 	float x,y,z;
 
 	constexpr Vec3Packed() : x(0), y(0), z(0) {}

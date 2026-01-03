@@ -44,11 +44,11 @@ struct alignas(16) Vec4{
 	}
 
 	FORCE_INLINE explicit Vec4(const Vec3& p){
-		reg = simd::set(p.x, p.y, p.z, 0.0f);
+		reg = simd::set(p.get_x(), p.get_y(), p.get_z(), 0.0f);
 	}
 
 	FORCE_INLINE explicit Vec4(const Vec3& p, const float val){
-		reg = simd::set(p.x, p.y, p.z, val);
+		reg = simd::set(p.get_x(), p.get_y(), p.get_z(), val);
 	}
 
 	FORCE_INLINE explicit Vec4(simd::Register r) : reg(r) {}
@@ -95,7 +95,7 @@ struct alignas(16) Vec4{
 	}
 
 	[[nodiscard]] FORCE_INLINE Vec4 operator-() const{
-		return Vec4(simd::sub(simd::set1(0.0f), reg));
+		return Vec4(simd::neg(reg));
 	}
 
 	[[nodiscard]] FORCE_INLINE Vec4 operator*(const float scalar) const{
@@ -121,11 +121,11 @@ struct alignas(16) Vec4{
 		return *this;
 	}
 
-	FORCE_INLINE const float& operator[](int i) const {
+	// USE OPERATOR [] ONLY FOR DEBUG .. INEFFICIENT
+	FORCE_INLINE float operator[](int i) const {
 		assert(i < 4 && "index oob for Vec4");
 		return (&x)[i];
 	}
-
 	FORCE_INLINE float& operator[](int i) {
 		assert(i < 4 && "index oob for Vec4");
 		return (&x)[i];
@@ -194,7 +194,7 @@ static_assert(offsetof(Vec4,Vec4::z) == 2*sizeof(float), "Vec4: Gap between y an
 static_assert(offsetof(Vec4,Vec4::w) == 3*sizeof(float), "Vec4: Gap between z and w");
 
 inline std::ostream& operator<<(std::ostream& os, const Vec4& v){
-	os << "Vec4(" << v.x << ", " << v.y << ", " << v.z << ", " << v.w << ")";
+	os << "Vec4(" << v.get_x() << ", " << v.get_y() << ", " << v.get_z() << ", " << v.get_w() << ")";
 	return os;
 }
 
