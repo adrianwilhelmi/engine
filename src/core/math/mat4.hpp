@@ -174,7 +174,7 @@ struct alignas(16) Mat4{
 	}
 
 	[[nodiscard]] FORCE_INLINE const float* data() const{
-		return &cols[0].x;
+		return reinterpret_cast<const float*>(&cols[0]);
 	}
 
 	[[nodiscard]] static Mat4 look_at(
@@ -187,30 +187,30 @@ struct alignas(16) Mat4{
 
 		Mat4 res;
 
-		res.cols[0] = Vec4(s.x, u.x, -f.x, 0.0f);
-		res.cols[1] = Vec4(s.y, u.y, -f.y, 0.0f);
-		res.cols[2] = Vec4(s.z, u.z, -f.z, 0.0f);
+		res.cols[0] = Vec4(s.get_x(), u.get_x(), -f.get_x(), 0.0f);
+		res.cols[1] = Vec4(s.get_y(), u.get_y(), -f.get_y(), 0.0f);
+		res.cols[2] = Vec4(s.get_z(), u.get_z(), -f.get_z(), 0.0f);
 
 		Vec4 eye4(eye);
 		Vec4 translation = mul(res, eye4);
 
 		res.cols[3] = translation * Vec4(-1.0f, -1.0f, -1.0f, 0.0f);
-		res.cols[3].w = 1.0f;
+		res.cols[3].set_w(1.0f);
 
 		return res;
 	}
 
 	[[nodiscard]] FORCE_INLINE static Mat4 translate(const Vec3& v){
 		Mat4 res = Mat4::identity();
-		res.cols[3] = Vec4(v.x, v.y, v.z, 1.0f);
+		res.cols[3] = Vec4(v.get_x(), v.get_y(), v.get_z(), 1.0f);
 		return res;
 	}
 
 	[[nodiscard]] FORCE_INLINE static Mat4 scale(const Vec3& v){
 		return Mat4(
-			Vec4(v.x, 0.0f, 0.0f, 0.0f),
-			Vec4(0.0f, v.y, 0.0f, 0.0f),
-			Vec4(0.0f, 0.0f, v.z, 0.0f),
+			Vec4(v.get_x(), 0.0f, 0.0f, 0.0f),
+			Vec4(0.0f, v.get_y(), 0.0f, 0.0f),
+			Vec4(0.0f, 0.0f, v.get_z() , 0.0f),
 			Vec4(0.0f, 0.0f, 0.0f, 1.0f)
 		);
 	}
@@ -224,9 +224,9 @@ struct alignas(16) Mat4{
 		const float f_n = 1.0f / (zfar - znear);
 
 		Mat4 res;	// identity
-		res.cols[0].x = 2.0f * r_l;
-		res.cols[1].y = 2.0f * t_b;
-		res.cols[2].z = -f_n;
+		res.cols[0].set_x(2.0f * r_l);
+		res.cols[1].set_y(2.0f * t_b);
+		res.cols[2].set_z(-f_n);
 
 		res.cols[3] = Vec4(
 			-(right + left) * r_l,
@@ -274,13 +274,14 @@ struct alignas(16) Mat4{
 
 inline std::ostream& operator <<(std::ostream& os, const Mat4& m){
 	os << std::fixed << std::setprecision(3);
-	for(int i = 0; i < 4; ++i){
-		os << "| ";
-		for(int j = 0; j < 4; ++j){
-			os << m[j][i] << (j == 3 ? "" : " ");
-		}
-		os << " |\n";
+	os << "| ";
+	for(int j = 0; j < 4; ++j){
+		os << m.cols[j].get_x() << " ";
+		os << m.cols[j].get_y() << " ";
+		os << m.cols[j].get_z() << " ";
+		os << m.cols[j].get_w();
 	}
+	os << " |\n";
 	return os;
 }
 
