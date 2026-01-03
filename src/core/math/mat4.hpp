@@ -3,7 +3,6 @@
 #include<iostream>
 #include<cmath>
 #include<vector>
-#include<cstdint>
 #include<iomanip>
 
 #include"vec4.hpp"
@@ -34,17 +33,6 @@ struct alignas(16) Mat4{
 
 	FORCE_INLINE static Mat4 identity(){
 		return Mat4();
-	}
-
-	FORCE_INLINE Mat4(const std::vector<float>& vec){
-		for(int i = 0; i < 4; ++i){
-			cols[i] = Vec4(
-				vec[i*4 + 0],
-				vec[i*4 + 1],
-				vec[i*4 + 2],
-				vec[i*4 + 3]
-			);
-		}
 	}
 
 	FORCE_INLINE Mat4(const float* vec){
@@ -97,14 +85,14 @@ struct alignas(16) Mat4{
 
 	[[nodiscard]] FORCE_INLINE Mat4 operator+(const Mat4& other) const{
 		Mat4 res;
-		for(uint16_t i = 0; i < 4; ++i){
+		for(int i = 0; i < 4; ++i){
 			res.cols[i] = cols[i] + other.cols[i];
 		}
 		return res;
 	}
 
-	FORCE_INLINE const Vec4& operator[](uint16_t i) const {return cols[i]; }
-	FORCE_INLINE Vec4& operator[](uint16_t i) {return cols[i]; }
+	FORCE_INLINE const Vec4& operator[](int i) const {return cols[i]; }
+	FORCE_INLINE Vec4& operator[](int i) {return cols[i]; }
 
 	FORCE_INLINE void transpose_(){
 		simd::transpose(cols[0].reg, cols[1].reg, cols[2].reg, cols[3].reg);
@@ -226,13 +214,69 @@ struct alignas(16) Mat4{
 			Vec4(0.0f, 0.0f, 0.0f, 1.0f)
 		);
 	}
+
+	[[nodiscard]] FORCE_INLINE static Mat4 ortho(
+			const float left, const float right,
+			const float bottom, const float top,
+			const float znear, const float zfar){
+		const float r_l = 1.0f / (right - left);
+		const float t_b = 1.0f / (top - bottom);
+		const float f_n = 1.0f / (zfar - znear);
+
+		Mat4 res;	// identity
+		res.cols[0].x = 2.0f * r_l;
+		res.cols[1].y = 2.0f * t_b;
+		res.cols[2].z = -f_n;
+
+		res.cols[3] = Vec4(
+			-(right + left) * r_l,
+			-(top + bottom) * t_b,
+			-znear * f_n,
+			1.0f
+		);
+
+		return res;
+	}
+
+	[[nodiscard]] FORCE_INLINE static Mat4 rotate_x(float rad){
+		float s = std::sin(rad);
+		float c = std::cos(rad);
+		return Mat4(
+			Vec4(1.0f,	0.0f,	0.0f,	0.0f),
+			Vec4(0.0f,	c,		s,		0.0f),
+			Vec4(0.0f,	-s,		c,		0.0f),
+			Vec4(0.0f,	0.0f,	0.0f,	1.0f)
+		);
+	}
+
+	[[nodiscard]] FORCE_INLINE static Mat4 rotate_y(float rad){
+		float s = std::sin(rad);
+		float c = std::cos(rad);
+		return Mat4(
+			Vec4(c,		0.0f,	-s,		0.0f),
+			Vec4(0.0f,	1.0f,	0.0f,	0.0f),
+			Vec4(s,		0.0f,	c,		0.0f),
+			Vec4(0.0f,	0.0f,	0.0f,	1.0f)
+		);
+	}
+
+	[[nodiscard]] FORCE_INLINE static Mat4 rotate_z(float rad){
+		float s = std::sin(rad);
+		float c = std::cos(rad);
+		return Mat4(
+			Vec4(c,		s,		0.0f,	0.0f),
+			Vec4(-s,	c,		0.0f,	0.0f),
+			Vec4(0.0f,	0.0f,	1.0f,	0.0f),
+			Vec4(0.0f,	0.0f,	0.0f,	1.0f)
+		);
+	}
 };
 
 inline std::ostream& operator <<(std::ostream& os, const Mat4& m){
 	os << std::fixed << std::setprecision(3);
-	for(uint16_t i = 0; i < 4; ++i){
+	for(int i = 0; i < 4; ++i){
 		os << "| ";
-		for(uint16_t j = 0; j < 4; ++j){
+		for(int j = 0; j < 4; ++j){
 			os << m[j][i] << (j == 3 ? "" : " ");
 		}
 		os << " |\n";

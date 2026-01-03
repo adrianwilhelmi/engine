@@ -615,3 +615,121 @@ TEST(Mat4Test, InverseGeneralMatrix8){
 	float identity[16] = {1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1};
 	ExpectMat4Near(res, identity, 1e-6f);
 }
+
+TEST(Mat4Test, Rotations){
+	const float PI_2 = 1.570796f;
+	Vec4 unit_y(0.0f, 1.0f, 0.0f, 0.0f);
+	Vec4 unit_x(1.0f, 0.0f, 0.0f, 0.0f);
+
+	Mat4 rx = Mat4::rotate_x(PI_2);
+	Vec4 res_x = rx * unit_y;
+	EXPECT_TRUE(res_x.is_close(Vec4(0,0,1,0), 1e-5f));
+
+	Mat4 ry = Mat4::rotate_y(PI_2);
+	Vec4 res_y = ry*unit_x;
+	EXPECT_TRUE(res_y.is_close(Vec4(0,0,-1,0), 1e-5f));
+
+	Mat4 rz = Mat4::rotate_z(PI_2);
+	Vec4 res_z = rz * unit_x;
+	EXPECT_TRUE(res_z.is_close(Vec4(0,1,0,0), 1e-5f));
+}
+
+TEST(Mat4Test, RotationInverse){
+	float angle = 0.785398f; // 45 deg
+	Mat4 rx = Mat4::rotate_x(angle);
+	Mat4 rx_inv = Mat4::rotate_x(-angle);
+
+	Mat4 res = rx * rx_inv;
+
+	for(int i = 0; i < 4; ++i){
+		for(int j = 0; j < 4; ++j){
+			float expected = (i == j) ? 1.0f : 0.0f;
+			EXPECT_NEAR(res[i][j], expected, 1e-5f);
+		}
+	}
+}
+
+TEST(Mat4Test, OrthoProjection){
+	float l = -10.0f,	r = 10.0f;
+	float b = -5.0f,	t = 5.0f;
+	float n = 0.1f,		f = 100.1f;
+
+	Mat4 O = Mat4::ortho(l,r,b,t,n,f);
+
+	Vec4 center_near((l+r) / 2.0f, (t+b) / 2.0f, -n, 1.0f);
+	Vec4 res_n = O * center_near;
+	EXPECT_NEAR(res_n.x, 0.0f, 1e-5f);
+	EXPECT_NEAR(res_n.y, 0.0f, 1e-5f);
+	EXPECT_NEAR(res_n.z, 0.0f, 1e-5f);
+
+	Vec4 far_top_right(r,t,-f,1.0f);
+	Vec4 res_f = O*far_top_right;
+	EXPECT_NEAR(res_f.x, 1.0f, 1e-5f);
+	EXPECT_NEAR(res_f.y, 1.0f, 1e-5f);
+	EXPECT_NEAR(res_f.z, 1.0f, 1e-5f);
+}
+
+TEST(Mat4Test, OrthoFrustumCorners){
+	float l = -2.0f,	r = 2.0f;
+	float b = -1.0f,	t = 1.0f;
+	float n = 0.0f,		f = 10.0f;
+
+	Mat4 O = Mat4::ortho(l,r,b,t,n,f);
+
+	Vec4 lbn(l,b,-n,1.0f);
+	Vec4 res_lbn = O * lbn;
+	EXPECT_NEAR(res_lbn.x, -1.0f, 1e-5f);
+	EXPECT_NEAR(res_lbn.y, -1.0f, 1e-5f);
+	EXPECT_NEAR(res_lbn.z, 0.0f, 1e-5f);
+
+	Vec4 rtf(r,t,-f,1.0f);
+	Vec4 res_rtf = O * rtf;
+	EXPECT_NEAR(res_rtf.x, 1.0f, 1e-5f);
+	EXPECT_NEAR(res_rtf.y, 1.0f, 1e-5f);
+	EXPECT_NEAR(res_rtf.z, 1.0f, 1e-5f);
+
+}
+
+TEST(Mat4Test, LookAt){
+	Vec3 eye(0,0,10);
+	Vec3 target(0,0,0);
+	Vec3 up(0,1,0);
+
+	Mat4 view = Mat4::look_at(eye, target, up);
+
+	Vec4 view_target = view * Vec4(target, 1.0f);
+	EXPECT_NEAR(view_target.x, 0.0f, 1e-5f);
+	EXPECT_NEAR(view_target.y, 0.0f, 1e-5f);
+	EXPECT_NEAR(std::abs(view_target.z), 10.0f, 1e-5f);
+}
+
+TEST(Mat4Test, LookAtDiagnoal){
+	Vec3 eye(10,10,10);
+	Vec3 target(0,0,0);
+	Vec3 up(0,1,0);
+
+	Mat4 view = Mat4::look_at(eye, target, up);
+
+	Vec4 res_target = view * Vec4(target, 1.0f);
+
+	EXPECT_NEAR(res_target.x, 0.0f, 1e-5f);
+	EXPECT_NEAR(res_target.y, 0.0f, 1e-5f);
+	// sqrt(100 + 100 + 100) = ~17.32
+	EXPECT_NEAR(std::abs(res_target.z), 17.3205f, 1e-4f);
+
+	Vec4 world_up(0,1,0,0);
+	Vec4 view_up = view*world_up;
+	EXPECT_GT(view_up.y, 0.0f);
+}
+
+TEST(Mat4Test, LookAtVertical){
+	Vec3 eye(0,0,0);
+	Vec3 target(0,1,0);
+	Vec3 up(0,0,1);
+
+	Mat4 view = Mat4::look_at(eye, target, up);
+	Vec4 res_target = view * Vec4(target, 1.0f);
+
+	EXPECT_FALSE(std::isnan(res_target.x));
+	EXPECT_NEAR(res_target.x, 0.0f, 1e-5f);
+}

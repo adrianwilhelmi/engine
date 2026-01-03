@@ -234,7 +234,7 @@ namespace engine::math::simd{
 [[nodiscard]] FORCE_INLINE Register dot3_splat(Register a, Register b){
 	//returns [dot, dot, dot, _]
 	#ifdef ENGINE_SIMD_SSE
-		return _mm_dp_ps(a,b,0xF7);
+		return _mm_dp_ps(a,b,0x77);
 	#elif ENGINE_SIMD_NEON
 		float d = dot3(a,b);
 		return vdupq_n_f32(d);

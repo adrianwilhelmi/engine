@@ -1,7 +1,6 @@
 #pragma once
 
 #include<iostream>
-#include<cstddef>
 #include<cassert>
 
 #include"simd_backend.hpp"
@@ -48,6 +47,10 @@ struct alignas(16) Vec4{
 		reg = simd::set(p.x, p.y, p.z, 0.0f);
 	}
 
+	FORCE_INLINE explicit Vec4(const Vec3& p, const float val){
+		reg = simd::set(p.x, p.y, p.z, val);
+	}
+
 	FORCE_INLINE explicit Vec4(simd::Register r) : reg(r) {}
 
 	[[nodiscard]] FORCE_INLINE Vec4 operator+(const Vec4& other) const{
@@ -85,12 +88,12 @@ struct alignas(16) Vec4{
 		return *this;
 	}
 
-	FORCE_INLINE const float& operator[](uint16_t i) const {
+	FORCE_INLINE const float& operator[](int i) const {
 		assert(i < 4 && "index oob for Vec4");
 		return (&x)[i];
 	}
 
-	FORCE_INLINE float& operator[](uint16_t i) {
+	FORCE_INLINE float& operator[](int i) {
 		assert(i < 4 && "index oob for Vec4");
 		return (&x)[i];
 	}
