@@ -937,5 +937,19 @@ FORCE_INLINE void inverse(
 	#endif
 }
 
+[[nodiscard]] FORCE_INLINE Register quat_conjugate(Register q){
+	const Register mask = set(-0.0f, -0.0f, -0.0f, 0.0f);
+
+	#ifdef ENGINE_SIMD_SSE
+		return _mm_xor_ps(q, mask);
+	#elif ENGINE_SIMD_NEON
+		return vreinterpretq_f32_u32(veorq_u32(
+			vreinterpretq_u32_f32(q), 
+			vreinterpretq_u32_f32(mask)
+		));
+	#else
+		return {-q.f[0], -q.f[1], -q.f[2], q.f[3]};
+	#endif
+}
 
 } // namespace engine::math::simd
