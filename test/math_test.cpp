@@ -110,6 +110,37 @@ TEST(Vec3Test, Comparison){
 	EXPECT_FALSE(a.is_close(d,1e-6f));
 }
 
+TEST(Vec3Test, Getter){
+	float x = 4.333;
+	float y = 2.0;
+	float z = 3.333;
+	Vec3 a(x, y, z);
+
+	EXPECT_FLOAT_EQ(a.get_x(), x);
+	EXPECT_FLOAT_EQ(a.get_y(), y);
+	EXPECT_FLOAT_EQ(a.get_z(), z);
+}
+
+TEST(Vec3Test, Setter){
+	Vec3 a(0);
+
+	EXPECT_FLOAT_EQ(a.get_x(), 0.f);
+	EXPECT_FLOAT_EQ(a.get_y(), 0.f);
+	EXPECT_FLOAT_EQ(a.get_z(), 0.f);
+
+	float x = 4.333;
+	float y = 2.0;
+	float z = 3.333;
+
+	a.set_x(x);
+	a.set_y(y);
+	a.set_z(z);
+
+	EXPECT_FLOAT_EQ(a.get_x(), x);
+	EXPECT_FLOAT_EQ(a.get_y(), y);
+	EXPECT_FLOAT_EQ(a.get_z(), z);
+}
+
 
 TEST(Vec4Test, MemoryLayout){
 	EXPECT_EQ(sizeof(Vec4), 16);
@@ -178,6 +209,44 @@ TEST(Vec4Test, FromVec3){
 	EXPECT_FLOAT_EQ(v4.z, 3.0f);
 	EXPECT_FLOAT_EQ(v4.w, 0.0f);
 }
+
+TEST(Vec4Test, Getter){
+	float x = 4.333;
+	float y = 2.0;
+	float z = 3.333;
+	float w = 1234.222;
+	Vec4 a(x, y, z, w);
+
+	EXPECT_FLOAT_EQ(a.get_x(), x);
+	EXPECT_FLOAT_EQ(a.get_y(), y);
+	EXPECT_FLOAT_EQ(a.get_z(), z);
+	EXPECT_FLOAT_EQ(a.get_w(), w);
+}
+
+TEST(Vec4Test, Setter){
+	Vec4 a(0);
+
+	EXPECT_FLOAT_EQ(a.get_x(), 0.f);
+	EXPECT_FLOAT_EQ(a.get_y(), 0.f);
+	EXPECT_FLOAT_EQ(a.get_z(), 0.f);
+	EXPECT_FLOAT_EQ(a.get_w(), 0.f);
+
+	float x = 4.333;
+	float y = 2.0;
+	float z = 3.333;
+	float w = 4.22201;
+
+	a.set_x(x);
+	a.set_y(y);
+	a.set_z(z);
+	a.set_w(w);
+
+	EXPECT_FLOAT_EQ(a.get_x(), x);
+	EXPECT_FLOAT_EQ(a.get_y(), y);
+	EXPECT_FLOAT_EQ(a.get_z(), z);
+	EXPECT_FLOAT_EQ(a.get_w(), w);
+}
+
 
 void ExpectMat4Near(
 		const Mat4& actual,
@@ -733,3 +802,4 @@ TEST(Mat4Test, LookAtVertical){
 	EXPECT_FALSE(std::isnan(res_target.x));
 	EXPECT_NEAR(res_target.x, 0.0f, 1e-5f);
 }
+

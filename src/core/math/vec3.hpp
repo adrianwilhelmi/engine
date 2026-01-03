@@ -50,6 +50,31 @@ struct alignas(16) Vec3{
 		return Vec3Packed(x,y,z);
 	};
 
+	[[nodiscard]] FORCE_INLINE float get_x() const{
+		return simd::x(reg);
+	}
+
+	[[nodiscard]] FORCE_INLINE float get_y() const{
+		return simd::y(reg);
+	}
+
+	[[nodiscard]] FORCE_INLINE float get_z() const{
+		return simd::z(reg);
+	}
+
+	FORCE_INLINE void set_x(const float val){
+		reg = simd::set_x(reg, val);
+	}
+
+	FORCE_INLINE void set_y(const float val){
+		reg = simd::set_y(reg, val);
+	}
+
+	FORCE_INLINE void set_z(const float val){
+		reg = simd::set_z(reg, val);
+	}
+
+
 	[[nodiscard]] FORCE_INLINE Vec3 operator+(const Vec3& other) const{
 		return Vec3(simd::add(reg, other.reg));
 	}

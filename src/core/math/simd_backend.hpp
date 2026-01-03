@@ -58,6 +58,7 @@ namespace engine::math::simd{
 	#endif
 }
 
+//constructors
 [[nodiscard]] FORCE_INLINE Register set(float x, float y, float z, float w = 0.0f){
 	#ifdef ENGINE_SIMD_SSE
 		return _mm_set_ps(w,z,y,x);
@@ -68,7 +69,7 @@ namespace engine::math::simd{
 		return {x,y,z,w};
 	#endif
 }
-	
+
 [[nodiscard]] FORCE_INLINE Register load_zero_w(const float* ptr_to_3_floats){
 	#ifdef ENGINE_SIMD_SSE
 		__m128 v = _mm_set_ps(
@@ -102,6 +103,100 @@ namespace engine::math::simd{
 	#endif
 }
 
+//getters setters
+[[nodiscard]] FORCE_INLINE float x(Register a) {
+	#ifdef ENGINE_SIMD_SSE
+		return _mm_cvtss_f32(a);
+	#elif ENGINE_SIMD_NEON
+		return vgetq_lane_f32(a, 0);
+	#else
+		return a.f[0];
+	#endif
+}
+
+[[nodiscard]] FORCE_INLINE float y(Register a) {
+	#ifdef ENGINE_SIMD_SSE
+		return _mm_cvtss_f32(
+			_mm_shuffle_ps(a,a, _MM_SHUFFLE(1,1,1,1))
+		);
+	#elif ENGINE_SIMD_NEON
+		return vgetq_lane_f32(a, 1);
+	#else
+		return a.f[1];
+	#endif
+}
+
+[[nodiscard]] FORCE_INLINE float z(Register a) {
+	#ifdef ENGINE_SIMD_SSE
+		return _mm_cvtss_f32(
+			_mm_shuffle_ps(a,a, _MM_SHUFFLE(2,2,2,2))
+		);
+	#elif ENGINE_SIMD_NEON
+		return vgetq_lane_f32(a, 2);
+	#else
+		return a.f[2];
+	#endif
+}
+
+[[nodiscard]] FORCE_INLINE float w(Register a) {
+	#ifdef ENGINE_SIMD_SSE
+		return _mm_cvtss_f32(
+			_mm_shuffle_ps(a,a, _MM_SHUFFLE(3,3,3,3))
+		);
+	#elif ENGINE_SIMD_NEON
+		return vgetq_lane_f32(a, 3);
+	#else
+		return a.f[3];
+	#endif
+}
+
+[[nodiscard]] FORCE_INLINE Register set_x(Register a, float val) {
+	#ifdef ENGINE_SIMD_SSE
+		// 0x00 -> take val, put it in lane 0, leave the rest from a
+		return _mm_insert_ps(a, _mm_set_ss(val), 0x00 << 4);
+	#elif ENGINE_SIMD_NEON
+		return vsetq_lane_f32(val, a, 0);
+	#else
+		a.f[0] = val;
+		return a;
+	#endif
+}
+
+[[nodiscard]] FORCE_INLINE Register set_y(Register a, float val) {
+	#ifdef ENGINE_SIMD_SSE
+		// 0x10 -> take val, put it in lane 1, leave the rest from a
+		return _mm_insert_ps(a, _mm_set_ss(val), 0x01 << 4);
+	#elif ENGINE_SIMD_NEON
+		return vsetq_lane_f32(val, a, 1);
+	#else
+		a.f[1] = val;
+		return a;
+	#endif
+}
+
+[[nodiscard]] FORCE_INLINE Register set_z(Register a, float val) {
+	#ifdef ENGINE_SIMD_SSE
+		return _mm_insert_ps(a, _mm_set_ss(val), 0x02 << 4);
+	#elif ENGINE_SIMD_NEON
+		return vsetq_lane_f32(val, a, 2);
+	#else
+		a.f[2] = val;
+		return a;
+	#endif
+}
+
+[[nodiscard]] FORCE_INLINE Register set_w(Register a, float val) {
+	#ifdef ENGINE_SIMD_SSE
+		return _mm_insert_ps(a, _mm_set_ss(val), 0x03 << 4);
+	#elif ENGINE_SIMD_NEON
+		return vsetq_lane_f32(val, a, 3);
+	#else
+		a.f[3] = val;
+		return a;
+	#endif
+}
+
+// arithmetic
 [[nodiscard]] FORCE_INLINE Register add(Register a, Register b){
 	#ifdef ENGINE_SIMD_SSE
 		return _mm_add_ps(a,b);
@@ -151,6 +246,17 @@ namespace engine::math::simd{
 	#else
 		return {a.f[0] * s, a.f[1]*s, a.f[2]*s, a.f[3]*s};
 	#endif
+}
+
+[[nodiscard]] FORCE_INLINE Register neg(Register a){
+	#ifdef ENGINE_SIMD_SSE
+		return _mm_xor_ps(a, _mm_set1_ps(-0.0f));
+	#elif ENGINE_SIMD_NEON
+		return vnegq_f32(a);
+	#else
+		return {-a.f[0], -a.f[1], -a.f[2], -a.f[3]};
+	#endif
+
 }
 
 [[nodiscard]] FORCE_INLINE Register fmadd(Register a, Register b, Register c){

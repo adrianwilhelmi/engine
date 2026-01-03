@@ -53,6 +53,39 @@ struct alignas(16) Vec4{
 
 	FORCE_INLINE explicit Vec4(simd::Register r) : reg(r) {}
 
+	[[nodiscard]] FORCE_INLINE float get_x() const{
+		return simd::x(reg);
+	}
+
+	[[nodiscard]] FORCE_INLINE float get_y() const{
+		return simd::y(reg);
+	}
+
+	[[nodiscard]] FORCE_INLINE float get_z() const{
+		return simd::z(reg);
+	}
+
+	[[nodiscard]] FORCE_INLINE float get_w() const{
+		return simd::w(reg);
+	}
+
+	FORCE_INLINE void set_x(const float val){
+		reg = simd::set_x(reg, val);
+	}
+
+	FORCE_INLINE void set_y(const float val){
+		reg = simd::set_y(reg, val);
+	}
+
+	FORCE_INLINE void set_z(const float val){
+		reg = simd::set_z(reg, val);
+	}
+
+	FORCE_INLINE void set_w(const float val){
+		reg = simd::set_w(reg, val);
+	}
+
+
 	[[nodiscard]] FORCE_INLINE Vec4 operator+(const Vec4& other) const{
 		return Vec4(simd::add(reg, other.reg));
 	}
