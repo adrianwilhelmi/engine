@@ -11,14 +11,23 @@ struct alignas(16) Quat{
 	FORCE_INLINE explicit Quat(simd::Register r) : reg(r) {}
 	FORCE_INLINE Quat(float x, float y, float z, float w) : 
 		reg(simd::set(x,y,z,w)) {}
-	FORCE_INLINE Quat(float val) : reg(simd::set(0,0,0,w)) {}
+	FORCE_INLINE Quat(float val) : reg(simd::set(0,0,0,val)) {}
 
 	[[nodiscard]] FORCE_INLINE static Quat identity() {
 		return Quat();
 	}
 
+	[[nodiscard]] FORCE_INLINE static Quat from_axis_angle(
+			const Vec3& axis,
+			float radians){
+		float half_angle = radians * 0.5f;
+		float s = std::sin(half_angle);
+		float c = std::cos(half_angle);
+		return Quat(axis.get_x() * s, axis.get_y() * s, axis.get_z() * s, c);
+	}
+
 	[[nodiscard]] FORCE_INLINE Quat conjugated() const {
-		return simd::quat_conjugate(reg);
+		return Quat(simd::quat_conjugate(reg));
 	}
 
 	[[nodiscard]] FORCE_INLINE Quat normalized() const{
@@ -60,32 +69,57 @@ struct alignas(16) Quat{
 	}
 
 	[[nodiscard]] FORCE_INLINE Quat operator*(const Quat& other) const{
-		simd::Register oreg = other.reg;
-		simd::Register wwww_a = simd::splat<3>(reg);
-		simd::Register wwww_b = simd::splat<3>(oreg);
-
-		simd::Register res = simd::mul(wwww_a, oreg);
-		res = simd::fmadd(wwww_b, reg, res);
-
-		simd::Register v_cross = simd::cross3(reg,oreg);
-		res = simd::add(res, v_cross);
-
-		float d3 = simd::dot3(reg,oreg);
-		float wa = simd::w(reg);
-		float wb = simd::w(oreg);
-		res = simd::set_w(res, (wa*wb) - d3);
-
-		return Quat(res);
+		return Quat(simd::quat_mul(reg, other.reg));
 	}
 
 	[[nodiscard]] FORCE_INLINE Vec3 rotate(const Vec3& v) const{
 		simd::Register q_w = simd::splat<3>(reg);
 		simd::Register t = simd::mul(simd::cross3(reg,v.reg), simd::set1(2.0f));
 
-		simd::Register res = fmadd(q_w, t, v.reg);
+		simd::Register res = simd::fmadd(q_w, t, v.reg);
 		res = simd::add(res, simd::cross3(reg,t));
 
-		return Quat(res);
+		return Vec3(res);
+	}
+
+	[[nodiscard]] FORCE_INLINE Mat4 to_mat4() const{
+		simd::Register q2 = simd::add(reg,reg);
+
+		simd::Register x_splat = simd::splat<0>(reg);
+		simd::Register y_splat = simd::splat<1>(reg);
+		simd::Register z_splat = simd::splat<2>(reg);
+		simd::Register w_splat = simd::splat<3>(reg);
+
+		simd::Register tmp0 = simd::mul(x_splat, q2);
+		simd::Register tmp1 = simd::mul(y_splat, q2);
+		simd::Register tmp2 = simd::mul(z_splat, q2);
+		simd::Register tmp3 = simd::mul(w_splat, q2);
+
+		simd::Register c0 = simd::set(
+			1.0f - simd::x(simd::mul(y_splat, simd::splat<1>(q2)))
+				- simd::x(simd::mul(z_splat, simd::splat<2>(q2))),
+			simd::y(tmp0) + simd::z(tmp3),
+			simd::z(tmp0) - simd::y(tmp3),
+			0.0f
+		);
+
+		simd::Register c1 = simd::set(
+			simd::y(tmp0) - simd::z(tmp3),
+			1.0f - simd::x(tmp0) - simd::z(tmp2),
+			simd::z(tmp1) + simd::x(tmp3),
+			0.0f
+		);
+
+		simd::Register c2 = simd::set(
+			simd::z(tmp0) + simd::y(tmp3),
+			simd::z(tmp1) - simd::x(tmp3),
+			1.0f - simd::x(tmp0) - simd::y(tmp1),
+			0.0f
+		);
+
+		simd::Register c3 = simd::set(0,0,0,1);
+
+		return Mat4(c0,c1,c2,c3);
 	}
 
 };

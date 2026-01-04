@@ -31,7 +31,19 @@ struct alignas(16) Mat4{
 		cols[3] = col3;
 	}
 
-	FORCE_INLINE static Mat4 identity(){
+	FORCE_INLINE Mat4(
+			const simd::Register r0,
+			const simd::Register r1,
+			const simd::Register r2,
+			const simd::Register r3){
+		cols[0] = Vec4(r0);
+		cols[1] = Vec4(r1);
+		cols[2] = Vec4(r2);
+		cols[3] = Vec4(r3);
+	}
+
+
+	[[nodiscard]] FORCE_INLINE static Mat4 identity(){
 		return Mat4();
 	}
 

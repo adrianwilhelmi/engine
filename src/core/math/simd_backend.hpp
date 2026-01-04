@@ -340,7 +340,7 @@ namespace engine::math::simd{
 [[nodiscard]] FORCE_INLINE Register dot3_splat(Register a, Register b){
 	//returns [dot, dot, dot, _]
 	#ifdef ENGINE_SIMD_SSE
-		return _mm_dp_ps(a,b,0x77);
+		return _mm_dp_ps(a,b,0x7F);
 	#elif ENGINE_SIMD_NEON
 		float d = dot3(a,b);
 		return vdupq_n_f32(d);
@@ -950,6 +950,31 @@ FORCE_INLINE void inverse(
 	#else
 		return {-q.f[0], -q.f[1], -q.f[2], q.f[3]};
 	#endif
+}
+
+[[nodiscard]] FORCE_INLINE Register quat_mul(Register a, Register b){
+	// b * a.w
+	Register res = mul(b, splat<3>(a));
+
+	// + (a.xyz * b.w)
+	res = fmadd(mul(a, splat<3>(b)), set(1.0f, 1.0f, 1.0f, 0.0f), res);
+
+	// + cross(a,b)
+	res = add(res, cross3(a,b));
+
+	Register d3 = dot3_splat(a,b);
+	Register w_part = mul(splat<3>(a), splat<3>(b));
+	Register final_w = sub(w_part, d3);
+
+	#ifdef ENGINE_SIMD_SSE
+		return _mm_blend_ps(res, final_w, 0x08);
+	#elif ENGINE_SIMD_NEON
+		return vbslq_f32(vsetq_lane_u32(0xFFFFFFFF, vdupq_n_u32(0), 3), final_w, res);
+	#else 
+		res.f[3] = final_w.f[3];
+		return res;
+	#endif
+
 }
 
 } // namespace engine::math::simd

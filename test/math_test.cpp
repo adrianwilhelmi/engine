@@ -4,6 +4,7 @@
 #include<core/math/vec3packed.hpp>
 #include<core/math/vec4.hpp>
 #include<core/math/mat4.hpp>
+#include<core/math/quat.hpp>
 
 #include<gtest/gtest.h>
 
@@ -803,3 +804,62 @@ TEST(Mat4Test, LookAtVertical){
 	EXPECT_NEAR(res_target.x, 0.0f, 1e-5f);
 }
 
+TEST(QuatTest, Identity){
+	Quat id = Quat::identity();
+	
+	EXPECT_FLOAT_EQ(id.get_x(), 0.f);
+	EXPECT_FLOAT_EQ(id.get_y(), 0.f);
+	EXPECT_FLOAT_EQ(id.get_z(), 0.f);
+	EXPECT_FLOAT_EQ(id.get_w(), 1.f);
+}
+
+TEST(QuatTest, Rotation90Z){
+	float pi_half = 1.570796f;
+
+	Quat qz = Quat::from_axis_angle(Vec3(0,0,1), pi_half);
+
+	Vec3 v1(1,0,0);
+	Vec3 res = qz.rotate(v1);
+
+	EXPECT_NEAR(res.get_x(), 0, 1e-6f);
+	EXPECT_NEAR(res.get_y(), 1, 1e-6f);
+	EXPECT_NEAR(res.get_z(), 0, 1e-6f);
+}
+
+TEST(QuatTest, Mul){
+	// rotate 90 deg X, 90 deg Y
+	float pi_half = 1.570796f;
+
+	Quat qx = Quat::from_axis_angle(Vec3(1,0,0), pi_half);
+	Quat qy = Quat::from_axis_angle(Vec3(0,1,0), pi_half);
+
+	Quat q_combined = qy*qx;
+
+	Vec3 v2(0,0,1);
+	Vec3 res = q_combined.rotate(v2);
+
+	EXPECT_NEAR(res.get_x(), 0, 1e-6f);
+	EXPECT_NEAR(res.get_y(), -1, 1e-6f);
+	EXPECT_NEAR(res.get_z(), 0, 1e-6f);
+}
+
+TEST(QuatTest, Conjugate){
+	float pi_half = 1.570796f;
+
+	Quat qz = Quat::from_axis_angle(Vec3(0,0,1), pi_half);
+	Quat q_inv = qz.conjugated();
+	Quat res = qz * q_inv;
+
+	EXPECT_NEAR(res.get_x(), 0, 1e-6f);
+	EXPECT_NEAR(res.get_w(), 1, 1e-6f);
+}
+
+TEST(QuatTest, ToMat){
+	float pi_half = 1.570796f;
+
+	Quat qz = Quat::from_axis_angle(Vec3(0,0,1), pi_half);
+	Mat4 m = qz.to_mat4();
+
+	EXPECT_NEAR(m.cols[0].get_x(), 0, 1e-6f);
+	EXPECT_NEAR(m.cols[0].get_y(), 1, 1e-6f);
+}
