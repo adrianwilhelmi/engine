@@ -863,3 +863,109 @@ TEST(QuatTest, ToMat){
 	EXPECT_NEAR(m.cols[0].get_x(), 0, 1e-6f);
 	EXPECT_NEAR(m.cols[0].get_y(), 1, 1e-6f);
 }
+
+TEST(QuatTest, Normalize){
+	Quat q(1.0f, 2.0f, 3.0f, 4.0f);
+	Quat qn = q.normalized();
+
+	EXPECT_NEAR(qn.l2(), 1.0f, 1e-6f);
+
+	float ratio = qn.get_x() / qn.get_y();
+	EXPECT_NEAR(ratio, 1.0f / 2.0f, 1e-6f);
+}
+
+TEST(QuatTest, MulOrder){
+	Quat q1 = Quat::from_axis_angle(Vec3(1, 0, 0), 1.570796f); // 90 X
+	Quat q2 = Quat::from_axis_angle(Vec3(0, 1, 0), 1.570796f); // 90 Y
+
+	Quat q_combined = q2 * q1;
+	Vec3 v(0, 0, 1);
+
+	Vec3 res_combined = q_combined.rotate(v);
+	Vec3 res_sequential = q2.rotate(q1.rotate(v));
+
+	EXPECT_NEAR(res_combined.get_x(), res_sequential.get_x(), 1e-6f);
+	EXPECT_NEAR(res_combined.get_y(), res_sequential.get_y(), 1e-6f);
+	EXPECT_NEAR(res_combined.get_z(), res_sequential.get_z(), 1e-6f);
+}
+
+TEST(QuatTest, Rotation180Y){
+	Quat q = Quat::from_axis_angle(Vec3(0,1,0), 3.141592f);
+
+	Vec3 v(1,0,0);
+	Vec3 res = q.rotate(v);
+
+	EXPECT_NEAR(res.get_x(), -1.0f, 1e-6f);
+	EXPECT_NEAR(res.get_y(), 0.0f, 1e-6f);
+	EXPECT_NEAR(res.get_z(), 0.0f, 1e-6f);
+}
+
+TEST(QuatTest, SlerpBoundaries){
+	Quat q1 = Quat::from_axis_angle(Vec3(1, 0, 0), 0.0f);
+	Quat q2 = Quat::from_axis_angle(Vec3(1, 0, 0), 1.570796f); // 90 deg
+
+	Quat res0 = Quat::slerp(q1, q2, 0.0f);
+	EXPECT_NEAR(res0.get_w(), q1.get_w(), 1e-6f);
+	EXPECT_NEAR(res0.get_x(), q1.get_x(), 1e-6f);
+
+	Quat res1 = Quat::slerp(q1, q2, 1.0f);
+	EXPECT_NEAR(res1.get_w(), q2.get_w(), 1e-6f);
+	EXPECT_NEAR(res1.get_x(), q2.get_x(), 1e-6f);
+}
+
+TEST(QuatTest, SlerpMidpoint) {
+	Quat q1 = Quat::from_axis_angle(Vec3(0, 1, 0), 0.0f);
+	Quat q2 = Quat::from_axis_angle(Vec3(0, 1, 0), 1.0f); // 1 radian
+
+	Quat res = Quat::slerp(q1, q2, 0.5f);
+	Quat expected = Quat::from_axis_angle(Vec3(0, 1, 0), 0.5f);
+
+	EXPECT_NEAR(res.get_w(), expected.get_w(), 1e-6f);
+	EXPECT_NEAR(res.get_y(), expected.get_y(), 1e-6f);
+}
+
+TEST(QuatTest, SlerpShortestPath) {
+	Quat q1 = Quat::identity();
+	Quat q2 = Quat::from_axis_angle(Vec3(0, 0, 1), 0.174533f); 
+	q2.reg = simd::mul(q2.reg, simd::set1(-1.0f)); 
+
+	Quat res = Quat::slerp(q1, q2, 0.5f);
+
+	float d = simd::x(simd::dot4_splat(res.reg, q1.reg));
+	float expected_w = std::cos(0.174533f * 0.5f * 0.5f);
+
+	EXPECT_GT(d, 0.0f); 
+	EXPECT_NEAR(std::abs(d), expected_w, 1e-4f);
+}
+
+TEST(QuatTest, FastSlerpPrecision) {
+	Quat q1 = Quat::from_axis_angle(Vec3(1, 1, 0), 0.2f);
+	Quat q2 = Quat::from_axis_angle(Vec3(1, 1, 0), 1.2f);
+	float t = 0.35f;
+
+	Quat res_slow = Quat::slerp(q1, q2, t);
+	Quat res_fast = Quat::slerp_fast(q1, q2, t);
+
+	EXPECT_NEAR(res_slow.get_x(), res_fast.get_x(), 1e-4f);
+	EXPECT_NEAR(res_slow.get_y(), res_fast.get_y(), 1e-4f);
+	EXPECT_NEAR(res_slow.get_z(), res_fast.get_z(), 1e-4f);
+	EXPECT_NEAR(res_slow.get_w(), res_fast.get_w(), 1e-4f);
+}
+
+TEST(QuatTest, FastSlerpLargeAnglePrecision) {
+	float angle = 2.79253f;
+	Quat q1 = Quat::identity();
+	Quat q2 = Quat::from_axis_angle(Vec3(0, 1, 0), angle);
+
+	float times[] = {0.25f, 0.5f, 0.75f};
+
+	for(float t : times) {
+		Quat res_slow = Quat::slerp(q1, q2, t);
+		Quat res_fast = Quat::slerp_fast(q1, q2, t);
+
+		EXPECT_NEAR(res_slow.get_x(), res_fast.get_x(), 1e-3f);
+		EXPECT_NEAR(res_slow.get_y(), res_fast.get_y(), 1e-3f);
+		EXPECT_NEAR(res_slow.get_z(), res_fast.get_z(), 1e-3f);
+		EXPECT_NEAR(res_slow.get_w(), res_fast.get_w(), 1e-3f);
+	}
+}

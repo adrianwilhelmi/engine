@@ -977,4 +977,125 @@ FORCE_INLINE void inverse(
 
 }
 
+[[nodiscard]] FORCE_INLINE Register quat_slerp(
+		Register q1, Register q2, float t){
+	Register d_splat = dot4_splat(q1,q2);
+
+	#ifdef ENGINE_SIMD_SSE
+		Register sign_bit = _mm_set1_ps(-0.0f);
+		Register is_neg = _mm_cmplt_ps(d_splat, _mm_setzero_ps());
+		Register flip_mask = _mm_and_ps(is_neg, sign_bit);
+		Register target_q2 = _mm_xor_ps(q2, flip_mask);
+	#elif ENGINE_SIMD_NEON
+		uint32x4_t is_neg = vcltq_f32(d_splat, vdupq_n_f32(0.0f));
+		Register sign_bit = vreinterpretq_f32_u32(
+			vdupq_n_u32(0x80000000)
+		);
+        Register flip_mask = vreinterpretq_f32_u32(
+			vandq_u32(is_neg, vreinterpretq_u32_f32(sign_bit))
+		);
+        Register target_q2 = vreinterpretq_f32_u32(
+			veorq_u32(vreinterpretq_u32_f32(q2), vreinterpretq_u32_f32(flip_mask))
+		);
+	#else
+		Register target_q2 = (x(d_splat) < 0.0f) ? neg(q2) : q2;
+	#endif
+
+	float abs_dot = x(abs(d_splat));
+
+	float s1, s2;
+
+	if(abs_dot > 0.9995f){
+		s1 = 1.0f - t;
+		s2 = t;
+	}
+	else{
+		float theta_0 = std::acos(abs_dot);
+		float theta = theta_0 * t;
+		float inv_sin_theta_0 = 1.0f / std::sin(theta_0);
+
+		s1 = std::sin(theta_0 - theta) * inv_sin_theta_0;
+		s2 = std::sin(theta) * inv_sin_theta_0;
+	}
+
+	Register res = fmadd(set1(s1), q1, mul(set1(s2), target_q2));
+	Register len_sq = dot4_splat(res,res);
+	return mul(res, rsqrt_accurate(len_sq));
+}
+
+[[nodiscard]] FORCE_INLINE Register quat_fast_slerp(
+		Register q1,
+		Register q2,
+		float t){
+	//taken from:
+	//	https://zeux.io/2015/07/23/approximating-slerp/
+	//	https://zeux.io/2016/05/05/optimizing-slerp/
+
+	Register dot_splat = dot4_splat(q1, q2);
+
+	#ifdef ENGINE_SIMD_SSE
+		Register abs_mask = _mm_castsi128_ps(_mm_set1_epi32(0x7FFFFFFF));
+		Register d = _mm_and_ps(dot_splat, abs_mask);
+	#elif ENGINE_SIMD_NEON
+		Register d = vabsq_f32(dot_splat);
+	#else
+		Register d = {
+			std::abs(dot_splat.f[0]), 
+			std::abs(dot_splat.f[0]),
+			std::abs(dot_splat.f[0]),
+			std::abs(dot_splat.f[0])
+		};
+	#endif
+
+	Register T = set1(t);
+	Register T_minus_05 = sub(T, set1(0.5f));
+
+	Register A, B;
+
+	A = set1(-1.43519f);
+	A = fmadd(d, A, set1(3.55645f));
+	A = fmadd(d, A, set1(-3.2452f));
+	A = fmadd(d, A, set1(1.0904f));
+
+	B = set1(0.215638f);
+	B = fmadd(d, B, set1(-1.06021f));
+	B = fmadd(d, B, set1(0.848013f));
+
+	Register k = mul(A, mul(T_minus_05, T_minus_05));
+	k = add(k, B);
+
+	Register T_minus_1 = sub(T, set1(1.0f));
+	Register adj = mul(T, mul(T_minus_05, mul(T_minus_1, k)));
+	Register ot = add(T, adj);
+
+	#ifdef ENGINE_SIMD_SSE
+		Register sign_bit = _mm_set1_ps(-0.0f);
+		Register is_neg = _mm_cmplt_ps(dot_splat, _mm_setzero_ps());
+		Register flip_mask = _mm_and_ps(is_neg, sign_bit);
+		Register q2_corrected = _mm_xor_ps(q2, flip_mask);
+
+	#elif ENGINE_SIMD_NEON
+		uint32x4_t is_neg = vcltq_f32(dot_splat, vdupq_n_f32(0.0f));
+		Register flip_mask = vreinterpretq_f32_u32(vandq_u32(is_neg, vdupq_n_u32(0x80000000)));
+		Register q2_corrected = vreinterpretq_f32_u32(veorq_u32(vreinterpretq_u32_f32(q2), vreinterpretq_u32_f32(flip_mask)));
+
+	#else
+		Register q2_corrected;
+		if(dot_splat.f[0] < 0.0f){
+			q2_corrected = { -q2.f[0], -q2.f[1], -q2.f[2], -q2.f[3] };
+		}
+		else{
+			q2_corrected = q2;
+		}
+
+	#endif
+
+	Register one_minus_ot = sub(set1(1.0f), ot);
+	Register res = add(mul(q1, one_minus_ot), mul(q2_corrected, ot));
+	return mul(
+		res, 
+		rsqrt_accurate(dot4_splat(res,res))
+	);
+}
+
 } // namespace engine::math::simd

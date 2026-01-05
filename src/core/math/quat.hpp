@@ -30,6 +30,10 @@ struct alignas(16) Quat{
 		return Quat(simd::quat_conjugate(reg));
 	}
 
+	[[nodiscard]] FORCE_INLINE float l2() const{
+		return std::sqrt(simd::dot4(reg, reg));
+	}
+
 	[[nodiscard]] FORCE_INLINE Quat normalized() const{
 		simd::Register dot = simd::dot4_splat(reg,reg);
 		simd::Register inv_len = simd::rsqrt_accurate(dot);
@@ -120,6 +124,20 @@ struct alignas(16) Quat{
 		simd::Register c3 = simd::set(0,0,0,1);
 
 		return Mat4(c0,c1,c2,c3);
+	}
+
+	[[nodiscard]] FORCE_INLINE static Quat slerp(
+			const Quat& q1,
+			const Quat& q2,
+			float t){
+		return Quat(simd::quat_slerp(q1.reg, q2.reg, t));
+	}
+
+	[[nodiscard]] FORCE_INLINE static Quat slerp_fast(
+			const Quat& q1,
+			const Quat& q2,
+			float t){
+		return Quat(simd::quat_fast_slerp(q1.reg, q2.reg, t));
 	}
 
 };
