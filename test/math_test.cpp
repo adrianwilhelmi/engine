@@ -969,3 +969,86 @@ TEST(QuatTest, FastSlerpLargeAnglePrecision) {
 		EXPECT_NEAR(res_slow.get_w(), res_fast.get_w(), 1e-3f);
 	}
 }
+
+TEST(QuatTest, FastSlerpWorstCasePrecision) {
+	float angle = 3.124139f; // 179 deg
+	Quat q1 = Quat::identity();
+	Quat q2 = Quat::from_axis_angle(Vec3(0, 1, 0), angle);
+
+	float times[] = {0.25f, 0.5f, 0.75f};
+
+	for(float t : times) {
+		Quat res_slow = Quat::slerp(q1, q2, t);
+		Quat res_fast = Quat::slerp_fast(q1, q2, t);
+
+		EXPECT_NEAR(res_slow.get_x(), res_fast.get_x(), 1e-3f);
+		EXPECT_NEAR(res_slow.get_y(), res_fast.get_y(), 1e-3f);
+		EXPECT_NEAR(res_slow.get_z(), res_fast.get_z(), 1e-3f);
+		EXPECT_NEAR(res_slow.get_w(), res_fast.get_w(), 1e-3f);
+	}
+}
+
+TEST(QuatTest, SlerpIdenticalQuaternions) {
+	Quat q1 = Quat::from_axis_angle(Vec3(1, 0, 0), 0.1f);
+	Quat q2 = q1;
+
+	Quat res = Quat::slerp(q1, q2, 0.5f);
+
+	EXPECT_FALSE(std::isnan(res.get_x()));
+	EXPECT_NEAR(res.get_w(), q1.get_w(), 1e-6f);
+	EXPECT_NEAR(res.get_x(), q1.get_x(), 1e-6f);
+}
+
+TEST(QuatTest, SlerpNearlyIdentical) {
+	Quat q1 = Quat::identity();
+	Quat q2 = Quat::from_axis_angle(Vec3(0, 1, 0), 0.0001f);
+
+	Quat res = Quat::slerp(q1, q2, 0.5f);
+
+	EXPECT_NEAR(res.l2(), 1.0f, 1e-6f);
+	EXPECT_GT(res.get_w(), 0.999f);
+}
+
+TEST(QuatTest, ConsistencyWithMatrix) {
+	Quat q = Quat::from_axis_angle(Vec3(1, 2, 3).normalized(), 1.2f);
+	Mat4 m = q.to_mat4();
+	Vec3 v(1, 0, 0);
+
+	Vec3 res_q = q.rotate(v);
+ 
+	Vec4 res_m = m * Vec4(v, 1.0f);
+
+	EXPECT_NEAR(res_q.get_x(), res_m.get_x(), 1e-5f);
+	EXPECT_NEAR(res_q.get_y(), res_m.get_y(), 1e-5f);
+	EXPECT_NEAR(res_q.get_z(), res_m.get_z(), 1e-5f);
+}
+
+TEST(QuatTest, ConjugateProductLaw) {
+	Quat q1 = Quat::from_axis_angle(Vec3(1, 0, 0), 0.5f);
+	Quat q2 = Quat::from_axis_angle(Vec3(0, 1, 0), 0.8f);
+
+	Quat left = (q1 * q2).conjugated();
+	Quat right = q2.conjugated() * q1.conjugated();
+
+	EXPECT_NEAR(left.get_x(), right.get_x(), 1e-6f);
+	EXPECT_NEAR(left.get_y(), right.get_y(), 1e-6f);
+	EXPECT_NEAR(left.get_z(), right.get_z(), 1e-6f);
+	EXPECT_NEAR(left.get_w(), right.get_w(), 1e-6f);
+}
+	
+TEST(QuatTest, SlerpOpposite) {
+	Quat q1 = Quat::from_axis_angle(Vec3(1, 0, 0), 0.0f);
+	Quat q2 = Quat::from_axis_angle(Vec3(1, 0, 0), 3.141592f);
+
+	Quat res = Quat::slerp(q1, q2, 0.5f);
+
+	EXPECT_FALSE(std::isnan(res.get_w()));
+	EXPECT_NEAR(res.l2(), 1.0f, 1e-6f);
+}
+
+TEST(QuatTest, NormalizeSmall) {
+	Quat q(1e-10f, 1e-10f, 1e-10f, 1e-10f);
+	Quat qn = q.normalized();
+ 
+	EXPECT_NEAR(qn.l2(), 1.0f, 1e-5f);
+}
