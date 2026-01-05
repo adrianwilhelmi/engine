@@ -1,0 +1,17 @@
+++ GLM_FORCE_SIMD_AVX2 is DEFINED
+++ hardware AVX2 support is ENABLED in compiler
+---------------------------------------------------------------------------
+Benchmark                                 Time             CPU   Iterations
+---------------------------------------------------------------------------
+BM_naive_slerp/repeats:10_mean         73.8 ns         73.5 ns           10
+BM_naive_slerp/repeats:10_median       73.7 ns         73.3 ns           10
+BM_naive_slerp/repeats:10_stddev       10.3 ns         10.1 ns           10
+BM_naive_slerp/repeats:10_cv          14.02 %         13.81 %            10
+BM_simd_slerp/repeats:10_mean          66.7 ns         66.0 ns           10
+BM_simd_slerp/repeats:10_median        66.0 ns         65.6 ns           10
+BM_simd_slerp/repeats:10_stddev        3.15 ns         3.03 ns           10
+BM_simd_slerp/repeats:10_cv            4.72 %          4.60 %            10
+BM_fast_slerp/repeats:10_mean          16.6 ns         16.4 ns           10
+BM_fast_slerp/repeats:10_median        16.5 ns         16.4 ns           10
+BM_fast_slerp/repeats:10_stddev       0.668 ns        0.533 ns           10
+BM_fast_slerp/repeats:10_cv            4.04 %          3.24 %            10

@@ -4,3 +4,6 @@ build
 a.out
 bench/matmul/m_a.txt
 bench/matmul/m_b.txt
+bench/quat_slerp/quat_a.txt
+bench/quat_slerp/quat_b.txt
+bench/quat_slerp/ts.txt

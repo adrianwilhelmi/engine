@@ -1,6 +1,8 @@
 #pragma once
 
 #include"simd_backend.hpp"
+#include"vec3.hpp"
+#include"mat4.hpp"
 
 namespace engine::math{
 
