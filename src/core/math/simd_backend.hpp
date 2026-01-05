@@ -1098,4 +1098,131 @@ FORCE_INLINE void inverse(
 	);
 }
 
+[[nodiscard]] FORCE_INLINE Register quat_inverse(Register q){
+	Register conj = quat_conjugate(q);
+	Register dot = dot4_splat(q,q);
+	return div(conj, dot);
+}
+
+[[nodiscard]] FORCE_INLINE Register quat_from_euler(
+		float x,
+		float y,
+		float z){
+	float hx = x * 0.5f;
+	float hy = y * 0.5f;
+	float hz = z * 0.5f;
+
+	float sx = std::sin(hx);
+	float cx = std::cos(hx);
+	float sy = std::sin(hy);
+	float cy = std::cos(hy);
+	float sz = std::sin(hz);
+	float cz = std::cos(hz);
+
+	Register res = set(
+		sx * cy * cz - cx * sy * sz,
+		cx * sy * cz + sx * cy * sz,
+		cx * cy * sz - sx * sy * cz,
+		cx * cy * cz + sx * sy * sz
+	);
+
+	return res;
+}
+
+[[nodiscard]] FORCE_INLINE Register quat_to_euler(
+		Register q){
+	float x_val = x(q);
+	float y_val = y(q);
+	float z_val = z(q);
+	float w_val = w(q);
+
+	float sinr_cosp = 2.0f * (w_val * x_val + y_val * z_val);
+	float cosr_cosp = 1.0f - 2.0f * (x_val * x_val + y_val * y_val);
+	float res_x = std::atan2(sinr_cosp, cosr_cosp);
+
+	float sinp = 2.0f * (w_val * y_val - z_val * x_val);
+	float res_y;
+	if (std::abs(sinp) >= 1.0f)
+		res_y = std::copysign(3.1415926535f / 2.0f, sinp);
+	else
+		res_y = std::asin(sinp);
+
+	float siny_cosp = 2.0f * (w_val * z_val + x_val * y_val);
+	float cosy_cosp = 1.0f - 2.0f * (y_val * y_val + z_val * z_val);
+	float res_z = std::atan2(siny_cosp, cosy_cosp);
+
+	return set(res_x, res_y, res_z, 0.0f);
+}
+
+[[nodiscard]] FORCE_INLINE Register mat4_to_quat(
+		Register c0,
+		Register c1,
+		Register c2){
+    const float m00 = x(c0), m11 = y(c1), m22 = z(c2);
+    const float m10 = y(c0), m20 = z(c0);
+    const float m01 = x(c1), m21 = z(c1);
+    const float m02 = x(c2), m12 = y(c2);
+
+    const float t_x = 1.0f + m00 - m11 - m22;
+    const float t_y = 1.0f + m11 - m00 - m22;
+    const float t_z = 1.0f + m22 - m00 - m11;
+    const float t_w = 1.0f + m00 + m11 + m22;
+
+    const float s_yz_p = m21 + m12;
+    const float s_yz_m = m21 - m12;
+    const float s_zx_p = m02 + m20;
+    const float s_zx_m = m02 - m20;
+    const float s_xy_p = m10 + m01;
+    const float s_xy_m = m10 - m01;
+
+    const Register qx = set(t_x, s_xy_p, s_zx_p, s_yz_m);
+    const Register qy = set(s_xy_p, t_y, s_yz_p, s_zx_m);
+    const Register qz = set(s_zx_p, s_yz_p, t_z, s_xy_m);
+    const Register qw = set(s_yz_m, s_zx_m, s_xy_m, t_w);
+
+    Register res;
+	#if defined(ENGINE_SIMD_SSE)
+		const __m128 zero = _mm_setzero_ps();
+		const __m128 m00_v = _mm_set1_ps(m00);
+		const __m128 m11_v = _mm_set1_ps(m11);
+		const __m128 m22_v = _mm_set1_ps(m22);
+
+		const __m128 mask_z  = _mm_cmplt_ps(m22_v, zero);
+		const __m128 mask_xy = _mm_cmpgt_ps(m00_v, m11_v);
+		const __m128 mask_zw = _mm_cmplt_ps(m00_v, _mm_sub_ps(zero, m11_v));
+
+		const __m128 res_xy = _mm_blendv_ps(qy, qx, mask_xy);
+		const __m128 res_zw = _mm_blendv_ps(qw, qz, mask_zw);
+		res = _mm_blendv_ps(res_zw, res_xy, mask_z);
+
+	#elif defined(ENGINE_SIMD_NEON)
+		const float32x4_t zero = vdupq_n_f32(0.0f);
+		const float32x4_t m00_v = vdupq_n_f32(m00);
+		const float32x4_t m11_v = vdupq_n_f32(m11);
+		const float32x4_t m22_v = vdupq_n_f32(m22);
+
+		const uint32x4_t mask_z  = vcltq_f32(m22_v, zero);
+		const uint32x4_t mask_xy = vcgtq_f32(m00_v, m11_v);
+		const uint32x4_t mask_zw = vcltq_f32(m00_v, vnegq_f32(m11_v));
+
+		const float32x4_t res_xy = vbslq_f32(mask_xy, qx, qy);
+		const float32x4_t res_zw = vbslq_f32(mask_zw, qz, qw);
+		res = vbslq_f32(mask_z, res_xy, res_zw);
+
+	#else
+		if (m22 < 0.0f) {
+			if (m00 > m11) res = qx;
+			else res = qy;
+		} else {
+			if (m00 < -m11) res = qz;
+			else res = qw;
+		}
+
+	#endif
+
+    return mul(res, rsqrt_accurate(dot4_splat(res, res)));
+}
+
+
+
 } // namespace engine::math::simd

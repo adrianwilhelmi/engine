@@ -91,6 +91,21 @@ struct alignas(16) Mat4{
 		return mul(*this,v);
 	}
 
+	[[nodiscard]] FORCE_INLINE Mat4 operator*(const float val) const{
+		Mat4 res = *this;
+		for(int i = 0; i < 4; ++i){
+			res.cols[i].reg = simd::mul(res.cols[i].reg, val);
+		}
+		return res;
+	}
+
+	FORCE_INLINE Mat4& operator*=(const float val){
+		for(int i = 0; i < 4; ++i){
+			cols[i].reg = simd::mul(cols[i].reg, val);
+		}
+		return *this;
+	}
+
 	[[nodiscard]] FORCE_INLINE Mat4 operator*(const Mat4& m) const {
 		return matmul(*this,m);
 	}

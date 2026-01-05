@@ -1052,3 +1052,48 @@ TEST(QuatTest, NormalizeSmall) {
  
 	EXPECT_NEAR(qn.l2(), 1.0f, 1e-5f);
 }
+
+TEST(QuatTest, EulerRoundtrip) {
+	float x = 0.3f;
+	float y = 0.5f;
+	float z = -0.2f;
+
+	Quat q = Quat::from_euler(x,y,z);
+
+	Vec4 recovered = q.to_euler();
+
+	Quat q_recovered = Quat::from_euler(
+		recovered.get_x(),
+		recovered.get_y(),
+		recovered.get_z()
+	);
+
+	float d = Quat::dot(q, q_recovered);
+	EXPECT_NEAR(std::abs(d), 1.0f, 1e-6f);
+}
+
+TEST(QuatTest, EulerSpecificAxes) {
+    float pi_half = 1.570796f;
+
+    Quat qx = Quat::from_euler(pi_half, 0, 0);
+    Vec3 resX = qx.rotate(Vec3(0, 1, 0));
+    EXPECT_NEAR(resX.get_z(), 1.0f, 1e-6f);
+    EXPECT_NEAR(resX.get_y(), 0.0f, 1e-6f);
+
+    Quat qy = Quat::from_euler(0, pi_half, 0);
+    Vec3 resY = qy.rotate(Vec3(1, 0, 0));
+    EXPECT_NEAR(resY.get_z(), -1.0f, 1e-6f);
+    EXPECT_NEAR(resY.get_x(), 0.0f, 1e-6f);
+}
+
+TEST(QuatTest, InverseNonUnit) {
+    Quat q(1.0f, 1.0f, 1.0f, 1.0f); 
+    Quat q_inv = q.inversed();
+
+    Quat res = q * q_inv;
+
+    EXPECT_NEAR(res.get_x(), 0.0f, 1e-6f);
+    EXPECT_NEAR(res.get_y(), 0.0f, 1e-6f);
+    EXPECT_NEAR(res.get_z(), 0.0f, 1e-6f);
+    EXPECT_NEAR(res.get_w(), 1.0f, 1e-6f);
+}
