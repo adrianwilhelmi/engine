@@ -1223,6 +1223,116 @@ FORCE_INLINE void inverse(
     return mul(res, rsqrt_accurate(dot4_splat(res, res)));
 }
 
+FORCE_INLINE void quat_to_mat4(
+		Register q,
+		Register& c0,
+		Register& c1,
+		Register& c2,
+		Register& c3){
+    const Register mask_xyz = set(1.0f, 1.0f, 1.0f, 0.0f);
+    Register q2 = mul(add(q, q), mask_xyz);
 
+    Register x2 = splat<0>(q2);
+    Register y2 = splat<1>(q2);
+    Register z2 = splat<2>(q2);
+
+	#ifdef ENGINE_SIMD_SSE
+		Register v0_y = mul(
+			_mm_shuffle_ps(q,q, _MM_SHUFFLE(3,3,0,1)),
+			set(-1.0f, 1.0f, -1.0f, 0.0f)
+		);
+		Register v0_z = mul(
+			_mm_shuffle_ps(q,q, _MM_SHUFFLE(3,0,3,2)),
+			set(-1.0f, 1.0f, 1.0f, 0.0f)
+		);
+	#elif defined(ENGINE_SIMD_NEON)
+		Register v0_y = mul(
+			__builtin_shufflevector(q, q, 1, 0, 3, 3), 
+			set(-1.0f, 1.0f, -1.0f, 0.0f)
+		);
+        Register v0_z = mul(
+			__builtin_shufflevector(q, q, 2, 3, 0, 3),
+			set(-1.0f, -1.0f, 1.0f, 0.0f)
+		);
+	#else
+		Register v0_y = mul(
+			set(q.f[1], q.f[0], q.f[3], 0.0f),
+			set(-1.0f, 1.0f, -1.0f, 0.0f)
+		);
+		Register v0_z = mul(
+        	set(q.f[2], q.f[3], q.f[0], 0.0f),
+			set(-1.0f, 1.0f, 1.0f, 0.0f)
+		);
+	#endif
+
+    c0 = fmadd(y2, v0_y, set(1.0f, 0.0f, 0.0f, 0.0f));
+    c0 = fmadd(z2, v0_z, c0);
+
+	#ifdef ENGINE_SIMD_SSE
+		Register v1_x = mul(
+			_mm_shuffle_ps(q,q, _MM_SHUFFLE(3,3,0,1)),
+			set(1.0f, -1.0f, 1.0f, 0.0f)
+		);
+		Register v1_z = mul(
+        	_mm_shuffle_ps(q, q, _MM_SHUFFLE(3, 1, 2, 3)),
+			set(-1.0f, -1.0f, 1.0f, 0.0f)
+		);
+	#elif defined(ENGINE_SIMD_NEON)
+		Register v1_x = mul(
+			__builtin_shufflevector(q, q, 1, 0, 3, 3),
+			set(1.0f, -1.0f, 1.0f, 0.0f)
+		);
+		Register v1_z = mul(
+			__builtin_shufflevector(q, q, 3, 2, 1, 3),
+			set(-1.0f, -1.0f, 1.0f, 0.0f)
+		);
+	#else
+		Register v1_x = mul(
+        	set(q.f[1], q.f[0], q.f[3], 0.0f),
+			set(1.0f, -1.0f, 1.0f, 0.0f)
+		);
+		Register v1_z = mul(
+        	set(q.f[3], q.f[2], q.f[1], 0.0f),
+			set(-1.0f, -1.0f, 1.0f, 0.0f)
+		);
+	#endif
+
+    c1 = fmadd(x2, v1_x, set(0.0f, 1.0f, 0.0f, 0.0f));
+    c1 = fmadd(z2, v1_z, c1);
+
+	#ifdef ENGINE_SIMD_SSE
+		Register v2_x = mul(
+        	_mm_shuffle_ps(q, q, _MM_SHUFFLE(3, 0, 3, 2)),
+			set(1.0f, -1.0f, -1.0f, 0.0f)
+		);
+		Register v2_y = mul(
+        	_mm_shuffle_ps(q, q, _MM_SHUFFLE(3, 1, 2, 3)),
+			set(1.0f, 1.0f, -1.0f, 0.0f)
+		);
+	#elif defined(ENGINE_SIMD_NEON)
+		Register v2_x = mul(
+			__builtin_shufflevector(q, q, 2, 3, 0, 3),
+			set(1.0f, -1.0f, -1.0f, 0.0f)
+		);
+		Register v2_y = mul(
+			__builtin_shufflevector(q, q, 3, 2, 1, 3),
+			set(1.0f, 1.0f, -1.0f, 0.0f)
+		);
+	#else
+		Register v2_x = mul(
+        	set(q.f[2], q.f[3], q.f[0], 0.0f),
+			set(1.0f, -1.0f, -1.0f, 0.0f)
+		);
+		Register v2_y = mul(
+        	set(q.f[3], q.f[2], q.f[1], 0.0f),
+			set(1.0f, 1.0f, -1.0f, 0.0f)
+		);
+	#endif
+
+    c2 = fmadd(x2, v2_x, set(0.0f, 0.0f, 1.0f, 0.0f));
+    c2 = fmadd(y2, v2_y, c2);
+
+    c3 = set(0.0f, 0.0f, 0.0f, 1.0f);
+}
 
 } // namespace engine::math::simd

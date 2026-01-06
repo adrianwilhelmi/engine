@@ -106,49 +106,20 @@ struct alignas(16) Quat{
 	}
 
 	[[nodiscard]] FORCE_INLINE Mat4 to_mat4() const{
-		simd::Register q2 = simd::add(reg,reg);
-
-		simd::Register x_splat = simd::splat<0>(reg);
-		simd::Register y_splat = simd::splat<1>(reg);
-		simd::Register z_splat = simd::splat<2>(reg);
-		simd::Register w_splat = simd::splat<3>(reg);
-
-		simd::Register tmp0 = simd::mul(x_splat, q2);
-		simd::Register tmp1 = simd::mul(y_splat, q2);
-		simd::Register tmp2 = simd::mul(z_splat, q2);
-		simd::Register tmp3 = simd::mul(w_splat, q2);
-
-		simd::Register c0 = simd::set(
-			1.0f - simd::x(simd::mul(y_splat, simd::splat<1>(q2)))
-				- simd::x(simd::mul(z_splat, simd::splat<2>(q2))),
-			simd::y(tmp0) + simd::z(tmp3),
-			simd::z(tmp0) - simd::y(tmp3),
-			0.0f
+		Mat4 result;
+		simd::quat_to_mat4(
+			reg,
+			result.cols[0].reg,
+			result.cols[1].reg,
+			result.cols[2].reg,
+			result.cols[3].reg
 		);
-
-		simd::Register c1 = simd::set(
-			simd::y(tmp0) - simd::z(tmp3),
-			1.0f - simd::x(tmp0) - simd::z(tmp2),
-			simd::z(tmp1) + simd::x(tmp3),
-			0.0f
-		);
-
-		simd::Register c2 = simd::set(
-			simd::z(tmp0) + simd::y(tmp3),
-			simd::z(tmp1) - simd::x(tmp3),
-			1.0f - simd::x(tmp0) - simd::y(tmp1),
-			0.0f
-		);
-
-		simd::Register c3 = simd::set(0,0,0,1);
-
-		return Mat4(c0,c1,c2,c3);
+		return result;
 	}
 
 	[[nodiscard]] FORCE_INLINE Vec4 to_euler() const{
 		return Vec4(simd::quat_to_euler(reg));
 	}
-
 
 	[[nodiscard]] FORCE_INLINE static Quat slerp(
 			const Quat& q1,
@@ -168,8 +139,15 @@ struct alignas(16) Quat{
 			const Quat& q1,
 			const Quat& q2,
 			float t){
+		simd::Register r2 = q2.reg;
+		simd::Register d = simd::dot4_splat(q1.reg, r2);
+
+		if(simd::x(d) < 0.0f){
+			r2 = simd::sub(simd::set1(0.0f), r2);
+		}
+
 		return Quat(
-			simd::add(q1.reg, simd::mul(simd::sub(q2.reg, q1.reg), simd::set1(t)))
+			simd::add(q1.reg, simd::mul(simd::sub(r2, q1.reg), simd::set1(t)))
 		).normalized();
 	}
 };

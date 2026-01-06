@@ -1035,7 +1035,7 @@ TEST(QuatTest, ConjugateProductLaw) {
 	EXPECT_NEAR(left.get_z(), right.get_z(), 1e-6f);
 	EXPECT_NEAR(left.get_w(), right.get_w(), 1e-6f);
 }
-	
+
 TEST(QuatTest, SlerpOpposite) {
 	Quat q1 = Quat::from_axis_angle(Vec3(1, 0, 0), 0.0f);
 	Quat q2 = Quat::from_axis_angle(Vec3(1, 0, 0), 3.141592f);

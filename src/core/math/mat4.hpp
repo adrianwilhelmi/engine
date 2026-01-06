@@ -11,6 +11,7 @@
 namespace engine::math{
 
 struct alignas(16) Mat4{
+	// column-major
 	Vec4 cols[4];
 
 	FORCE_INLINE Mat4(){
