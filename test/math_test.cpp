@@ -1097,3 +1097,37 @@ TEST(QuatTest, InverseNonUnit) {
     EXPECT_NEAR(res.get_z(), 0.0f, 1e-6f);
     EXPECT_NEAR(res.get_w(), 1.0f, 1e-6f);
 }
+
+TEST(QuatTest, EulerGimbalLock) {
+	Quat q = Quat::from_euler(0.0f, 1.570796f, 0.0f); 
+	Vec4 recovered = q.to_euler();
+
+	Quat q_recovered = Quat::from_euler(recovered.get_x(), recovered.get_y(), recovered.get_z());
+
+	Vec3 v(1, 0, 0);
+	EXPECT_NEAR(q.rotate(v).get_z(), q_recovered.rotate(v).get_z(), 1e-5f);
+}
+
+TEST(QuatTest, SlerpVerySmallAngle) {
+	Quat q1 = Quat::identity();
+	Quat q2 = q1;
+	q2.reg = simd::add(q2.reg, simd::set(0.0f, 0.0f, 0.0f, 1e-9f));
+	q2 = q2.normalized();
+
+	Quat res = Quat::slerp(q1, q2, 0.5f);
+
+	EXPECT_FALSE(std::isnan(res.get_w()));
+	EXPECT_NEAR(res.l2(), 1.0f, 1e-6f);
+}
+
+TEST(QuatTest, FastSlerpVerySmallAngle) {
+    Quat q1 = Quat::identity();
+    Quat q2 = q1;
+    q2.reg = simd::add(q2.reg, simd::set(0.0f, 0.0f, 0.0f, 1e-9f));
+    q2 = q2.normalized();
+
+    Quat res = Quat::slerp_fast(q1, q2, 0.5f);
+
+    EXPECT_FALSE(std::isnan(res.get_w()));
+    EXPECT_NEAR(res.l2(), 1.0f, 1e-5f);
+}
