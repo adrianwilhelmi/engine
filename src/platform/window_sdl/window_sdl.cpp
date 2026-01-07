@@ -161,7 +161,7 @@ void SDLWindow::poll_events(std::unique_ptr<engine::input::Input>& input) {
 			}
 
 			case SDL_EVENT_MOUSE_WHEEL:{
-				ev.type = engine::event::EventType::MouseWheel;
+				ev.type = engine::event::EventType::MouseMove;
 				ev.payload.mm = {0,0, e.wheel.x, e.wheel.y };
 				break;
 			}
