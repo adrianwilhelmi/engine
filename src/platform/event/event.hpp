@@ -12,8 +12,6 @@ enum class EventType : uint8_t {
 	KeyUp,
 	MouseMove,
 	MouseWheel,
-	MouseWheelUp,
-	MouseWheelDown,
 	WindowClose,
 	WindowResize,
 	TextInput

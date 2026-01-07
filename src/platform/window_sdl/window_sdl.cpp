@@ -28,6 +28,15 @@ static inline engine::input::Key sdl_to_internal(SDL_Scancode code){
 	}
 }
 
+static inline engine::input::Key sdl_mouse_to_internal(uint8_t button){
+	switch(button){
+		case SDL_BUTTON_LEFT:		return engine::input::Key::MouseLeft;
+		case SDL_BUTTON_RIGHT:		return engine::input::Key::MouseRight;
+		case SDL_BUTTON_MIDDLE:		return engine::input::Key::MouseMiddle;
+		default:					return engine::input::Key::Unknown;
+	}
+}
+
 SDLWindow::~SDLWindow() {
 	if(window_){
 		SDL_DestroyWindow(window_);
@@ -98,11 +107,47 @@ void SDLWindow::poll_events(std::unique_ptr<engine::input::Input>& input) {
 				break;
 			}
 
-			case SDL_EVENT_MOUSE_BUTTON_DOWN:
-				break;
+			case SDL_EVENT_MOUSE_BUTTON_DOWN:{
+				engine::input::Key k = engine::input::Key::Unknown;
 
-			case SDL_EVENT_MOUSE_BUTTON_UP:
+				if(e.button.button == SDL_BUTTON_LEFT){
+					k = engine::input::Key::MouseLeft;
+				}
+				if(e.button.button == SDL_BUTTON_RIGHT){
+					k = engine::input::Key::MouseRight;
+				}
+				if(e.button.button == SDL_BUTTON_MIDDLE){
+					k = engine::input::Key::MouseMiddle;
+				}
+
+				if(k != engine::input::Key::Unknown){
+					ev.type = engine::event::EventType::KeyDown;
+					ev.payload.key = {k,false};
+				}
+
 				break;
+			}
+
+			case SDL_EVENT_MOUSE_BUTTON_UP:{
+				engine::input::Key k = engine::input::Key::Unknown;
+
+				if(e.button.button == SDL_BUTTON_LEFT){
+					k = engine::input::Key::MouseLeft;
+				}
+				if(e.button.button == SDL_BUTTON_RIGHT){
+					k = engine::input::Key::MouseRight;
+				}
+				if(e.button.button == SDL_BUTTON_MIDDLE){
+					k = engine::input::Key::MouseMiddle;
+				}
+
+				if(k != engine::input::Key::Unknown){
+					ev.type = engine::event::EventType::KeyUp;
+					ev.payload.key = {k,false};
+				}
+
+				break;
+			}
 
 			case SDL_EVENT_MOUSE_MOTION:{
 				ev.type = engine::event::EventType::MouseMove;

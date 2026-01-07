@@ -22,6 +22,9 @@ public:
 	virtual float mouse_y() const = 0;
 	virtual float mouse_dx() const = 0;
 	virtual float mouse_dy() const = 0;
+
+	virtual float mouse_wheel_x() const = 0;
+	virtual float mouse_wheel_y() const = 0;
 };
 
 } // engine::input

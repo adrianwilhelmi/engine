@@ -27,6 +27,9 @@ public:
 	float mouse_dx() const override { return mouse_dx_; }
 	float mouse_dy() const override { return mouse_dy_; }
 
+	float mouse_wheel_x() const override {return mouse_wheel_x_; }
+	float mouse_wheel_y() const override {return mouse_wheel_y_; }
+
 private:
 	static constexpr std::size_t QCAP = 1 << 10;
 	engine::event::EventQueue<QCAP> queue_;
@@ -40,6 +43,9 @@ private:
 	float mouse_y_ = 0.0f;
 	float mouse_dx_ = 0.0f;
 	float mouse_dy_ = 0.0f;
+
+	float mouse_wheel_x_ = 0.0f;
+	float mouse_wheel_y_ = 0.0f;
 };
 
 } // namespace engine::input

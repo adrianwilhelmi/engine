@@ -31,6 +31,9 @@ const char* key_to_name(engine::input::Key key) {
         case Key::Escape: return "Escape";
         case Key::Space:  return "Space";
         case Key::Enter:  return "Enter";
+        case Key::MouseLeft:  return "MouseLeft";
+        case Key::MouseRight:  return "MouseRight";
+        case Key::MouseMiddle:  return "MouseMiddle";
         default: return "Unknown";
     }
 }
@@ -87,11 +90,22 @@ int main(){
 
     std::cout << "Vulkan instance created successfully" << std::endl;
 
+	float prev_mouse_x = 0.0;
+	float prev_mouse_y = 0.0;
+	float new_mouse_x = 0.0;
+	float new_mouse_y = 0.0;
+
+	float prev_mouse_wheel_x = 0.0f;
+	float prev_mouse_wheel_y = 0.0f;
+	float new_mouse_wheel_x = 0.0f;
+	float new_mouse_wheel_y = 0.0f;
+
 	while (!window->should_close()) {
 		input->new_frame();
         window->poll_events(input);
 		input->process_events();
 
+		// keys
 		for(int i = 0; i < (int)engine::input::Key::Count; ++i){
 			auto k = static_cast<engine::input::Key>(i);
 
@@ -102,11 +116,40 @@ int main(){
 				std::cout << key_to_name(k) << " key released" << std::endl;
 			}
 		}
+
+		// mouse
+		new_mouse_x = input->mouse_x();
+		new_mouse_y = input->mouse_y();
+		if(new_mouse_x != prev_mouse_x){
+			std::cout << "mouse movement detected:" << std::endl;
+			std::cout << "new mouse x: " << new_mouse_x << std::endl;
+		}
+		if(new_mouse_y != prev_mouse_y){
+			std::cout << "mouse movement detected:" << std::endl;
+			std::cout << "new mouse y: " << new_mouse_y << std::endl;
+		}
+
+		prev_mouse_x = new_mouse_x;
+		prev_mouse_y = new_mouse_y;
+
+		// mouse wheel
+		new_mouse_wheel_x = input->mouse_wheel_x();
+		new_mouse_wheel_y = input->mouse_wheel_y();
+		if(new_mouse_wheel_x != prev_mouse_wheel_x){
+			std::cout << "mouse WHEEL movement detected:" << std::endl;
+			std::cout << "new mousewheel x: " << new_mouse_wheel_x << std::endl;
+		}
+		if(new_mouse_wheel_y != prev_mouse_wheel_y){
+			std::cout << "mouse WHEEL movement detected:" << std::endl;
+			std::cout << "new mousewheel y: " << new_mouse_wheel_y << std::endl;
+		}
+
+		prev_mouse_wheel_x = new_mouse_wheel_x;
+		prev_mouse_wheel_y = new_mouse_wheel_y;
     }
 
 	bool running = true;
 	vkDestroyInstance(instance, nullptr);
-
 
 	return 0;
 }

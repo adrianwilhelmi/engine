@@ -17,6 +17,8 @@ enum class Key{
 	MouseLeft,
 	MouseRight,
 	MouseMiddle,
+	MouseWheelUp,
+	MouseWheelDown,
 
 	Count
 };

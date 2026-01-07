@@ -49,8 +49,8 @@ void SDLInput::process_events(){
 			}
 
 			case engine::event::EventType::MouseWheel:{
-				mouse_dx_ += static_cast<float>(ev.payload.mm.dx);
-				mouse_dy_ += static_cast<float>(ev.payload.mm.dy);
+				mouse_wheel_x_ += static_cast<float>(ev.payload.mm.dx);
+				mouse_wheel_y_ += static_cast<float>(ev.payload.mm.dy);
 				break;
 			}
 
