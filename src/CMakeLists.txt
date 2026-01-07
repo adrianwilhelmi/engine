@@ -18,6 +18,15 @@ add_library(EngineCore STATIC
 	core/math/vec3packed.hpp
 	core/math/vec4.hpp
 	core/math/mat4.hpp
+
+
+	platform/window/window.hpp
+	platform/window/window_desc.hpp
+	platform/window/window_events.hpp
+	platform/window_sdl/window_sdl.hpp
+
+	platform/window_sdl/window_sdl.cpp
+	platform/window_sdl/window_sdl.cpp
 )
 
 if(ENGINE_NO_SIMD)

@@ -8,35 +8,27 @@
 #include<core/memory/linear_arena.hpp>
 #include<core/memory/pool_allocator.hpp>
 
+#include<platform/window/window.hpp>
+#include<platform/window_sdl/window_sdl.hpp>
+
 #include<SDL3/SDL.h>
 #include<SDL3/SDL_vulkan.h>
 #include<vulkan/vulkan.h>
 
-struct SdlDeleter{
-	void operator()(SDL_Window*p) const {SDL_DestroyWindow(p);}
-};
-
 int main(){
-	if(!SDL_Init(SDL_INIT_VIDEO)){
-		std::cerr << "SDL_Init err: " << SDL_GetError() << std::endl;
-		return 1;
+	engine::window::WindowDesc desc;
+	desc.title = "engine testin";
+	desc.width = 1280;
+	desc.height = 720;
+
+	std::unique_ptr<engine::window::Window> window = std::make_unique<engine::window::SDLWindow>();
+
+	if(!window->init(desc)){
+		std::cerr << "failed to init window" << std::endl;
+		return -1;
 	}
 
-	const std::string window_name = "SDL3_Window";
-	const uint64_t width = 800;
-	const uint64_t height = 600;
-	auto pwindow = std::unique_ptr<SDL_Window, SdlDeleter>(
-		SDL_CreateWindow(window_name.c_str(), width, height, SDL_WINDOW_RESIZABLE),
-		SdlDeleter()
-	);
-
-	if(!pwindow){
-		std::cerr << "SDL_CreateWindow err: " << SDL_GetError() << std::endl;
-		SDL_Quit();
-		return 1;
-	}
-
-
+	std::cout << "engine started" << std::endl;
 
 	Uint32 ext_count = 0;
 	const char* const* instance_exts = SDL_Vulkan_GetInstanceExtensions(&ext_count);
@@ -71,19 +63,13 @@ int main(){
 
     std::cout << "Vulkan instance created successfully" << std::endl;
 
-	assert(pwindow != nullptr);
-
+	while (!window->should_close()) {
+        window->poll_events();
+    }
 
 	bool running = true;
-	SDL_Event e;
-	while(running){
-		while(SDL_PollEvent(&e)){
-			if(e.type == SDL_EVENT_QUIT) running = false;
-		}
-	}
-
 	vkDestroyInstance(instance, nullptr);
-	SDL_Quit();
+
 
 	return 0;
 }
