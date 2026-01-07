@@ -1,8 +1,10 @@
 #pragma once
 
 #include<string>
+#include<memory>
 
 #include"window_desc.hpp"
+#include"platform/input/input.hpp"
 
 namespace engine::window{
 
@@ -11,7 +13,7 @@ public:
 	virtual ~Window() = default;
 	virtual bool init(const WindowDesc& desc) = 0;
 
-	virtual void poll_events() = 0;
+	virtual void poll_events(std::unique_ptr<engine::input::Input>& input) = 0;
 
 	virtual bool should_close() const = 0;
 

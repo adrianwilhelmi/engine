@@ -10,10 +10,30 @@
 
 #include<platform/window/window.hpp>
 #include<platform/window_sdl/window_sdl.hpp>
+#include<platform/input/input.hpp>
+#include<platform/input_sdl/input_sdl.hpp>
+
+#include<platform/input/key_codes.hpp>
 
 #include<SDL3/SDL.h>
 #include<SDL3/SDL_vulkan.h>
 #include<vulkan/vulkan.h>
+
+const char* key_to_name(engine::input::Key key) {
+    using namespace engine::input;
+    switch (key) {
+        case Key::Q: return "Q";
+        case Key::W: return "W";
+        case Key::E: return "E";
+        case Key::A: return "A";
+        case Key::S: return "S";
+        case Key::D: return "D";
+        case Key::Escape: return "Escape";
+        case Key::Space:  return "Space";
+        case Key::Enter:  return "Enter";
+        default: return "Unknown";
+    }
+}
 
 int main(){
 	engine::window::WindowDesc desc;
@@ -21,7 +41,11 @@ int main(){
 	desc.width = 1280;
 	desc.height = 720;
 
-	std::unique_ptr<engine::window::Window> window = std::make_unique<engine::window::SDLWindow>();
+	std::unique_ptr<engine::input::Input> input = 
+		std::make_unique<engine::input::SDLInput>();
+
+	std::unique_ptr<engine::window::Window> window =
+		std::make_unique<engine::window::SDLWindow>();
 
 	if(!window->init(desc)){
 		std::cerr << "failed to init window" << std::endl;
@@ -64,7 +88,20 @@ int main(){
     std::cout << "Vulkan instance created successfully" << std::endl;
 
 	while (!window->should_close()) {
-        window->poll_events();
+		input->new_frame();
+        window->poll_events(input);
+		input->process_events();
+
+		for(int i = 0; i < (int)engine::input::Key::Count; ++i){
+			auto k = static_cast<engine::input::Key>(i);
+
+			if(input->key_pressed(k)){
+				std::cout << key_to_name(k) << " key pressed" << std::endl;
+			}
+			if(input->key_released(k)){
+				std::cout << key_to_name(k) << " key released" << std::endl;
+			}
+		}
     }
 
 	bool running = true;

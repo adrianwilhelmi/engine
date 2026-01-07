@@ -22,11 +22,13 @@ add_library(EngineCore STATIC
 
 	platform/window/window.hpp
 	platform/window/window_desc.hpp
-	platform/window/window_events.hpp
 	platform/window_sdl/window_sdl.hpp
+	platform/input/input.hpp
+	platform/input_sdl/input_sdl.hpp
 
 	platform/window_sdl/window_sdl.cpp
 	platform/window_sdl/window_sdl.cpp
+	platform/input_sdl/input_sdl.cpp
 )
 
 if(ENGINE_NO_SIMD)

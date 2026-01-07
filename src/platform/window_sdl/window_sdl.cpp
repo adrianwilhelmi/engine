@@ -1,12 +1,32 @@
 #include<iostream>
+#include<memory>
 
 #include"platform/window/window.hpp"
 #include"platform/window/window_desc.hpp"
 #include"platform/window_sdl/window_sdl.hpp"
+#include"platform/input_sdl/input_sdl.hpp"
 
 #include<SDL3/SDL.h>
 
 namespace engine::window{
+
+static inline engine::input::Key sdl_to_internal(SDL_Scancode code){
+	switch(code){
+		case SDL_SCANCODE_W:      return engine::input::Key::W;
+		case SDL_SCANCODE_A:      return engine::input::Key::A;
+		case SDL_SCANCODE_S:      return engine::input::Key::S;
+		case SDL_SCANCODE_D:      return engine::input::Key::D;
+		case SDL_SCANCODE_Q:      return engine::input::Key::Q;
+		case SDL_SCANCODE_E:      return engine::input::Key::E;
+		case SDL_SCANCODE_ESCAPE: return engine::input::Key::Escape;
+		case SDL_SCANCODE_SPACE:  return engine::input::Key::Space;
+		case SDL_SCANCODE_RETURN: return engine::input::Key::Enter;
+		case SDL_SCANCODE_LSHIFT: return engine::input::Key::Shift;
+		case SDL_SCANCODE_LCTRL:  return engine::input::Key::Ctrl;
+		case SDL_SCANCODE_LALT:   return engine::input::Key::Alt;
+		default:                  return engine::input::Key::Unknown;
+	}
+}
 
 SDLWindow::~SDLWindow() {
 	if(window_){
@@ -24,20 +44,102 @@ bool SDLWindow::init(const WindowDesc& desc) {
 		desc.height,
 		SDL_WINDOW_RESIZABLE
 	);
+
+	this->width_ = desc.width;
+	this->height_ = desc.height;
+
 	return window_ != nullptr;
 }
 
-void SDLWindow::poll_events() {
-	SDL_Event event;
-	while(SDL_PollEvent(&event)){
-		if(event.type == SDL_EVENT_QUIT){
+void SDLWindow::poll_events(std::unique_ptr<engine::input::Input>& input) {
+	SDL_Event e;
+	while(SDL_PollEvent(&e)){
+		if(e.type == SDL_EVENT_QUIT){
 			should_close_ = true;
 		}
-		if(event.type == SDL_EVENT_KEY_DOWN){
-			//Input::set_key_state(event.key.scancode, true);
+
+		engine::event::Event ev{};
+		switch(e.type){
+			case SDL_EVENT_QUIT:{
+				ev.type = engine::event::EventType::WindowClose;
+				break;
+			}
+
+			case SDL_EVENT_WINDOW_RESIZED:{
+				ev.type = engine::event::EventType::WindowResize;
+				ev.payload.wr = { 
+					static_cast<uint32_t>(e.window.data1),
+					static_cast<uint32_t>(e.window.data2) 
+				};
+				break;
+			}
+
+			case SDL_EVENT_KEY_DOWN: {
+				engine::input::Key k = sdl_to_internal(
+					e.key.scancode
+				);
+
+				if(k != engine::input::Key::Unknown){
+					ev.type = engine::event::EventType::KeyDown;
+					ev.payload.key = { k, e.key.repeat != 0};
+				} else continue;
+				break;
+			}
+
+			case SDL_EVENT_KEY_UP: {
+				engine::input::Key k = sdl_to_internal(
+					e.key.scancode
+				);
+
+				if(k != engine::input::Key::Unknown){
+					ev.type = engine::event::EventType::KeyUp;
+					ev.payload.key = { k, false };
+				} else continue;
+				break;
+			}
+
+			case SDL_EVENT_MOUSE_BUTTON_DOWN:
+				break;
+
+			case SDL_EVENT_MOUSE_BUTTON_UP:
+				break;
+
+			case SDL_EVENT_MOUSE_MOTION:{
+				ev.type = engine::event::EventType::MouseMove;
+				ev.payload.mm = {
+					e.motion.x,
+					e.motion.y,
+					e.motion.xrel,
+					e.motion.yrel
+				};
+				break;
+			}
+
+			case SDL_EVENT_MOUSE_WHEEL:{
+				ev.type = engine::event::EventType::MouseWheel;
+				ev.payload.mm = {0,0, e.wheel.x, e.wheel.y };
+				break;
+			}
+
+			case SDL_EVENT_TEXT_INPUT:{
+				ev.type = engine::event::EventType::TextInput;
+				strncpy(
+					ev.payload.txt.text, 
+					e.text.text, 
+					sizeof(ev.payload.txt.text)-1
+				);
+				ev.payload.txt.text[sizeof(ev.payload.txt.text)-1] = '\0';
+				break;
+			}
+
+			default:
+				continue;
 		}
-		if(event.type == SDL_EVENT_KEY_UP){
-			//Input::set_key_state(event.key.scancode, false);
+
+		input->process_event(ev);
+
+		if(input->key_pressed(engine::input::Key::W)){
+			std::cout << "W pressed" << std::endl;
 		}
 	}
 }

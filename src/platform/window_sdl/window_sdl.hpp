@@ -1,8 +1,10 @@
 #pragma once
 
-#include<SDL3/SDL.h>
+#include<memory>
 
 #include"platform/window/window.hpp"
+
+#include<SDL3/SDL.h>
 
 namespace engine::window{
 
@@ -13,7 +15,7 @@ public:
 
 	bool init(const WindowDesc& desc);
 
-	void poll_events() override;
+	void poll_events(std::unique_ptr<engine::input::Input>& input) override;
 	void swap_buffers() override;
 
 	uint32_t width() const override {return width_; }
