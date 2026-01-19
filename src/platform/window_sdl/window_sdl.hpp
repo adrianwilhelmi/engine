@@ -1,10 +1,12 @@
 #pragma once
 
 #include<memory>
+#include<vector>
 
 #include"platform/window/window.hpp"
 
 #include<SDL3/SDL.h>
+#include<vulkan/vulkan.h>
 
 namespace engine::window{
 
@@ -23,6 +25,13 @@ public:
 	bool should_close() const override;
 
 	void* native_handle() const override;
+
+	std::vector<const char*> get_vulkan_instance_extensions() const override;
+	bool create_vulkan_surface(
+		VkInstance instance, 
+		VkSurfaceKHR* out_surface
+	) const override;
+
 
 private:
 	SDL_Window* window_ = nullptr;

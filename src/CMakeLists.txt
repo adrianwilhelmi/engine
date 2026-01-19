@@ -1,3 +1,9 @@
+set(RENDER_SOURCES
+	render/vulkan/renderer_vulkan.hpp
+	render/vulkan/renderer_vulkan.cpp
+	render/vulkan/vulkan_factory.cpp
+)
+
 add_library(EngineCore STATIC
 	core/memory/allocator_handle.hpp
 	core/memory/allocator_utils.hpp
@@ -29,6 +35,9 @@ add_library(EngineCore STATIC
 	platform/window_sdl/window_sdl.cpp
 	platform/window_sdl/window_sdl.cpp
 	platform/input_sdl/input_sdl.cpp
+
+
+	${RENDER_SOURCES}
 )
 
 if(ENGINE_NO_SIMD)

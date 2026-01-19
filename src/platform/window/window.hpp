@@ -2,9 +2,12 @@
 
 #include<string>
 #include<memory>
+#include<vector>
 
 #include"window_desc.hpp"
 #include"platform/input/input.hpp"
+
+#include<vulkan/vulkan.h>
 
 namespace engine::window{
 
@@ -22,6 +25,12 @@ public:
 
 	virtual void* native_handle() const = 0;
 	virtual void swap_buffers() = 0;
+
+	virtual std::vector<const char*> get_vulkan_instance_extensions() const = 0;
+	virtual bool create_vulkan_surface(
+		VkInstance instance, 
+		VkSurfaceKHR* out_surface
+	) const = 0;
 };
 
 } // namespace engine::window

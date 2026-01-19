@@ -7,6 +7,8 @@
 #include"platform/input_sdl/input_sdl.hpp"
 
 #include<SDL3/SDL.h>
+#include<SDL3/SDL_vulkan.h>
+#include<vulkan/vulkan.h>
 
 namespace engine::window{
 
@@ -47,11 +49,16 @@ SDLWindow::~SDLWindow() {
 bool SDLWindow::init(const WindowDesc& desc) {
 	if(!SDL_Init(SDL_INIT_VIDEO | SDL_INIT_EVENTS)) return false;
 
+	#if defined(WIN32) || defined(_WIN32) || defined(WIN64) || defined(_WIN64)
+		#include<timeapi.h>
+		timeBeginPeriod(1);
+	#endif
+
 	window_ = SDL_CreateWindow(
 		desc.title.c_str(),
 		desc.width,
 		desc.height,
-		SDL_WINDOW_RESIZABLE
+		SDL_WINDOW_RESIZABLE | SDL_WINDOW_VULKAN
 	);
 
 	this->width_ = desc.width;
@@ -199,6 +206,28 @@ void SDLWindow::swap_buffers(){
 
 void* SDLWindow::native_handle() const{ 
 	return (void*)window_;
+}
+
+std::vector<const char*> SDLWindow::get_vulkan_instance_extensions() const{
+	Uint32 count = 0;
+	const char* const* exts = SDL_Vulkan_GetInstanceExtensions(&count);
+
+	if(!exts) {
+		std::cerr << "SDL_Vulkan_GetInstanceExtensions returned null" << std::endl;
+		return {};
+	}
+	return std::vector<const char*>(exts, exts+count);
+}
+
+bool SDLWindow::create_vulkan_surface(
+		VkInstance instance,
+		VkSurfaceKHR* out_surface) const{
+	if(!out_surface || !window_) return false;
+	if(!SDL_Vulkan_CreateSurface(window_, instance, nullptr, out_surface)){
+		std::cerr << "SDL_Vulkan_CreateSurface failed: " << SDL_GetError() << std::endl;
+		return false;
+	}
+	return true;
 }
 
 } // namespace engine::window

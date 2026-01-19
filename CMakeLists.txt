@@ -34,6 +34,7 @@ if(UNIX)
 		-Wshadow
 		-Wconversion
 		-Wformat=2
+		-g
 	)
 
 	if(CMAKE_BUILD_TYPE MATCHES Debug)
