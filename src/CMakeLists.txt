@@ -1,8 +1,18 @@
-set(RENDER_SOURCES
-	render/vulkan/renderer_vulkan.hpp
-	render/vulkan/renderer_vulkan.cpp
-	render/vulkan/vulkan_factory.cpp
-)
+if(ENGINE_VULKAN_RENDERER) 
+	set(RENDER_SOURCES
+		render/vulkan/renderer_vulkan.hpp
+		render/vulkan/renderer_vulkan.cpp
+		render/vulkan/vulkan_factory.cpp
+	)
+	message(STATUS "Renderer: Vulkan ENABLED")
+else()
+	set(RENDER_SOURCES
+		render/software_renderer/renderer_software.hpp
+		render/software_renderer/renderer_software.cpp
+		render/software_renderer/renderer_software_factory.cpp
+	)
+	message(STATUS "Renderer: Software Renderer ENABLED (rendering on CPU)")
+endif()
 
 add_library(EngineCore STATIC
 	core/memory/allocator_handle.hpp
@@ -59,6 +69,10 @@ else()
 	endif()
 endif()
 
+if(ENGINE_VULKAN_RENDERER)
+	target_compile_definitions(EngineCore PUBLIC ENGINE_ENABLE_VULKAN)
+endif()
+
 set_target_properties(EngineCore PROPERTIES LINKER_LANGUAGE CXX)
 
 target_link_libraries(EngineCore PRIVATE
@@ -67,8 +81,11 @@ target_link_libraries(EngineCore PRIVATE
 
 target_link_libraries(EngineCore PUBLIC
 	SDL3::SDL3
-	Vulkan::Vulkan
 )
+
+if(ENGINE_VULKAN_RENDERER)
+	target_link_libraries(EngineCore PUBLIC Vulkan::Vulkan)
+endif()
 
 target_include_directories(EngineCore PUBLIC
 	${CMAKE_CURRENT_SOURCE_DIR}

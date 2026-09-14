@@ -1,21 +1,23 @@
-#pragma once
+
+#include"render/renderer.hpp"
+#include"render/software_renderer/renderer_software.hpp"
 
 namespace render{
 
-class SoftwareRenderer : public Renderer{
-	SoftwareRenderer();
-	~SoftwareRenderer() override;
+bool SoftwareRenderer::init(const RenderInitInfo& info){
+	this->window_ptr_ = info.window_handle;
+	this->width_ = info.width;
+	this->height_ = info.height;
 
-	bool init(const RenderInitInfo& info) override;
-	void render_frame() override;
-	void shutdown() override;
+	return true;
+}
 
-private:
-	int width;
-	int height;
-	std::shared_ptr<Window> window_handle;
+void SoftwareRenderer::render_frame(){
 
-};
+}
 
+void SoftwareRenderer::shutdown(){
+
+}
 
 } // namespace render
