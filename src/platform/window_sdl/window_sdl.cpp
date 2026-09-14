@@ -7,8 +7,10 @@
 #include"platform/input_sdl/input_sdl.hpp"
 
 #include<SDL3/SDL.h>
-#include<SDL3/SDL_vulkan.h>
-#include<vulkan/vulkan.h>
+#ifdef ENGINE_ENABLE_VULKAN
+	#include<SDL3/SDL_vulkan.h>
+	#include<vulkan/vulkan.h>
+#endif // ENGINE_ENABLE_VULKAN
 
 namespace engine::window{
 
@@ -208,27 +210,29 @@ void* SDLWindow::native_handle() const{
 	return (void*)window_;
 }
 
-std::vector<const char*> SDLWindow::get_vulkan_instance_extensions() const{
-	Uint32 count = 0;
-	const char* const* exts = SDL_Vulkan_GetInstanceExtensions(&count);
+#ifdef ENGINE_ENABLE_VULKAN
+	std::vector<const char*> SDLWindow::get_vulkan_instance_extensions() const{
+		Uint32 count = 0;
+		const char* const* exts = SDL_Vulkan_GetInstanceExtensions(&count);
 
-	if(!exts) {
-		std::cerr << "SDL_Vulkan_GetInstanceExtensions returned null" << std::endl;
-		return {};
+		if(!exts) {
+			std::cerr << "SDL_Vulkan_GetInstanceExtensions returned null" << std::endl;
+			return {};
+		}
+		return std::vector<const char*>(exts, exts+count);
 	}
-	return std::vector<const char*>(exts, exts+count);
-}
 
-bool SDLWindow::create_vulkan_surface(
-		VkInstance instance,
-		VkSurfaceKHR* out_surface) const{
-	if(!out_surface || !window_) return false;
-	if(!SDL_Vulkan_CreateSurface(window_, instance, nullptr, out_surface)){
-		std::cerr << "SDL_Vulkan_CreateSurface failed: " << SDL_GetError() << std::endl;
-		return false;
+	bool SDLWindow::create_vulkan_surface(
+			VkInstance instance,
+			VkSurfaceKHR* out_surface) const{
+		if(!out_surface || !window_) return false;
+		if(!SDL_Vulkan_CreateSurface(window_, instance, nullptr, out_surface)){
+			std::cerr << "SDL_Vulkan_CreateSurface failed: " << SDL_GetError() << std::endl;
+			return false;
+		}
+		return true;
 	}
-	return true;
-}
+#endif // ENGINE_ENABLE_VULKAN
 
 void SDLWindow::present_pixels(const uint32_t* data){
 	

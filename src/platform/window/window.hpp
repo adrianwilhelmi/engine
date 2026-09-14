@@ -7,7 +7,9 @@
 #include"window_desc.hpp"
 #include"platform/input/input.hpp"
 
-#include<vulkan/vulkan.h>
+#ifdef ENGINE_ENABLE_VULKAN
+	#include<vulkan/vulkan.h>
+#endif // ENGINE_ENABLE_VULKAN
 
 namespace engine::window{
 
@@ -28,11 +30,13 @@ public:
 
 	virtual void present_pixels(const uint32_t* data) = 0;
 
+#ifdef ENGINE_ENABLE_VULKAN
 	virtual std::vector<const char*> get_vulkan_instance_extensions() const = 0;
 	virtual bool create_vulkan_surface(
 		VkInstance instance, 
 		VkSurfaceKHR* out_surface
 	) const = 0;
+#endif // ENGINE_ENABLE_VULKAN
 };
 
 } // namespace engine::window

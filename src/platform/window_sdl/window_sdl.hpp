@@ -6,7 +6,9 @@
 #include"platform/window/window.hpp"
 
 #include<SDL3/SDL.h>
-#include<vulkan/vulkan.h>
+#ifdef ENGINE_ENABLE_VULKAN
+	#include<vulkan/vulkan.h>
+#endif // ENGINE_ENABLE_VULKAN
 
 namespace engine::window{
 
@@ -26,11 +28,13 @@ public:
 
 	void* native_handle() const override;
 
+#ifdef ENGINE_ENABLE_VULKAN
 	std::vector<const char*> get_vulkan_instance_extensions() const override;
 	bool create_vulkan_surface(
 		VkInstance instance, 
 		VkSurfaceKHR* out_surface
 	) const override;
+#endif // ENGINE_ENABLE_VULKAN
 
 	void present_pixels(const uint32_t* data);
 
