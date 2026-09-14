@@ -12,6 +12,10 @@
 	#include<vulkan/vulkan.h>
 #endif // ENGINE_ENABLE_VULKAN
 
+#if defined(WIN32) || defined(_WIN32) || defined(WIN64) || defined(_WIN64)
+	#include<timeapi.h>
+#endif
+
 namespace engine::window{
 
 static inline engine::input::Key sdl_to_internal(SDL_Scancode code){
@@ -43,6 +47,10 @@ static inline engine::input::Key sdl_mouse_to_internal(uint8_t button){
 
 SDLWindow::~SDLWindow() {
 	if(window_){
+		#if defined(WIN32) || defined(_WIN32) || defined(WIN64) || defined(_WIN64)
+			timeEndPeriod(1);
+		#endif
+
 		SDL_DestroyWindow(window_);
 		SDL_Quit();
 	}
@@ -52,15 +60,19 @@ bool SDLWindow::init(const WindowDesc& desc) {
 	if(!SDL_Init(SDL_INIT_VIDEO | SDL_INIT_EVENTS)) return false;
 
 	#if defined(WIN32) || defined(_WIN32) || defined(WIN64) || defined(_WIN64)
-		#include<timeapi.h>
 		timeBeginPeriod(1);
+	#endif
+
+	Uint32 flags = SDL_WINDOW_RESIZABLE;
+	#ifdef ENGINE_ENABLE_VULKAN
+		flags |= SDL_WINDOW_VULKAN;
 	#endif
 
 	window_ = SDL_CreateWindow(
 		desc.title.c_str(),
 		desc.width,
 		desc.height,
-		SDL_WINDOW_RESIZABLE | SDL_WINDOW_VULKAN
+		flags
 	);
 
 	this->width_ = desc.width;
