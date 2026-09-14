@@ -45,11 +45,11 @@ int main(){
 	desc.width = 1280;
 	desc.height = 720;
 
-	std::unique_ptr<engine::input::Input> input = 
-		std::make_unique<engine::input::SDLInput>();
+	std::shared_ptr<engine::input::Input> input = 
+		std::make_shared<engine::input::SDLInput>();
 
-	std::unique_ptr<engine::window::Window> window =
-		std::make_unique<engine::window::SDLWindow>();
+	std::shared_ptr<engine::window::Window> window =
+		std::make_shared<engine::window::SDLWindow>();
 
 	if(!window->init(desc)){
 		std::cerr << "failed to init window" << std::endl;
@@ -62,7 +62,7 @@ int main(){
 	auto renderer = render::create_vulkan_renderer();
 
 	render::RenderInitInfo init_info;
-	init_info.window_handle = window.get();
+	init_info.window_handle = window;
 	init_info.width = 1280;
 	init_info.height = 720;
 

@@ -18,7 +18,7 @@ VulkanRenderer::~VulkanRenderer() {
 }
 
 bool VulkanRenderer::init(const RenderInitInfo& info){
-	this->window_ptr_ = info.window_handle;
+	this->window_ptr_ = info.window_handle.get();
 	this->width_ = info.width;
 	this->height_ = info.height;
 

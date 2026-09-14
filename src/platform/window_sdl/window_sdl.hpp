@@ -17,7 +17,7 @@ public:
 
 	bool init(const WindowDesc& desc);
 
-	void poll_events(std::unique_ptr<engine::input::Input>& input) override;
+	void poll_events(std::shared_ptr<engine::input::Input>& input) override;
 	void swap_buffers() override;
 
 	uint32_t width() const override {return width_; }
@@ -32,6 +32,7 @@ public:
 		VkSurfaceKHR* out_surface
 	) const override;
 
+	void present_pixels(const uint32_t* data);
 
 private:
 	SDL_Window* window_ = nullptr;

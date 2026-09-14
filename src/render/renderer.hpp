@@ -3,10 +3,12 @@
 #include<cstdint>
 #include<memory>
 
+#include<platform/window/window.hpp>
+
 namespace render{
 
 struct RenderInitInfo{
-	void* window_handle;
+	std::shared_ptr<engine::window::Window> window_handle;
 	int width, height;
 };
 
@@ -20,5 +22,6 @@ public:
 };
 
 std::unique_ptr<Renderer> create_vulkan_renderer();
+std::unique_ptr<Renderer> create_software_renderer();
 
 } // namespace render

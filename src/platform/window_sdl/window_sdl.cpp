@@ -67,7 +67,7 @@ bool SDLWindow::init(const WindowDesc& desc) {
 	return window_ != nullptr;
 }
 
-void SDLWindow::poll_events(std::unique_ptr<engine::input::Input>& input) {
+void SDLWindow::poll_events(std::shared_ptr<engine::input::Input>& input) {
 	SDL_Event e;
 	while(SDL_PollEvent(&e)){
 		if(e.type == SDL_EVENT_QUIT){
@@ -228,6 +228,10 @@ bool SDLWindow::create_vulkan_surface(
 		return false;
 	}
 	return true;
+}
+
+void SDLWindow::present_pixels(const uint32_t* data){
+	
 }
 
 } // namespace engine::window
