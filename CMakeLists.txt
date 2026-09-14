@@ -1,7 +1,6 @@
 option(ENGINE_BUILD_TESTS "Build unit tests" ON)
 option(ENGINE_NO_SIMD "Force disable SIMD and use fallback" OFF)
 option(ENGINE_BUILD_BENCHMARKS "Build benchmarks" OFF)
-option(ENGINE_VULKAN_RENDERER "Vulkan enabled" OFF)
 
 cmake_minimum_required(VERSION 3.25)
 project(Engine LANGUAGES CXX)
@@ -53,10 +52,6 @@ if(UNIX)
 endif()
 
 find_package(SDL3 REQUIRED)
-
-if(ENGINE_VULKAN_RENDERER)
-	find_package(Vulkan REQUIRED)
-endif()
 
 add_subdirectory(src)
 

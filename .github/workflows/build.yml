@@ -23,10 +23,9 @@ jobs:
           libXcursor-devel libXfixes-devel libXi-devel libXScrnSaver-devel \
           libXtst-devel dbus-devel ibus-devel systemd-devel \
           mesa-libGL-devel libxkbcommon-devel mesa-libGLES-devel \
-          mesa-libEGL-devel vulkan-devel wayland-devel wayland-protocols-devel \
+          mesa-libEGL-devel wayland-devel wayland-protocols-devel \
           libdrm-devel mesa-libgbm-devel libusb1-devel libdecor-devel \
           pipewire-jack-audio-connection-kit-devel libthai-devel liburing-devel \
-          vulkan vulkan-tools
 
       - name: Build SDL3
         run: |
@@ -72,7 +71,7 @@ jobs:
           libxss-dev libxtst-dev libxkbcommon-dev libdrm-dev \
           libgbm-dev libgl1-mesa-dev libgles2-mesa-dev \
           libegl1-mesa-dev libdbus-1-dev libibus-1.0-dev libudev-dev libthai-dev \
-          libvulkan-dev vulkan-tools
+          
 
       - name: Build SDL3
         run: |
@@ -99,7 +98,6 @@ jobs:
     runs-on: windows-latest
     env:
       SDL_VERSION: 3.2.28
-      VULKAN_VERSION: 1.4.335.0
 
     steps:
       - uses: actions/checkout@v4
@@ -123,14 +121,6 @@ jobs:
         run: |
           Invoke-WebRequest "https://github.com/libsdl-org/SDL/releases/download/release-$env:SDL_VERSION/SDL3-devel-$env:SDL_VERSION-VC.zip" -OutFile C:\SDL.zip
           Expand-Archive C:\SDL.zip -DestinationPath C:\SDL3
-
-      # https://github.com/marketplace/actions/setup-vulkan-sdk
-      - name: Download Vulkan
-        uses: humbletim/setup-vulkan-sdk@v1.2.1
-        with:
-          vulkan-query-version: ${{ env.VULKAN_VERSION }}
-          vulkan-components: Vulkan-Headers, Vulkan-Loader
-          vulkan-use-cache: true
 
       - name: Configure
         run: |

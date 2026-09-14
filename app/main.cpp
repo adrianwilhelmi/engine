@@ -17,11 +17,6 @@
 
 #include<SDL3/SDL.h>
 
-/*
-#include<SDL3/SDL_vulkan.h>
-#include<vulkan/vulkan.h>
-*/
-
 const char* key_to_name(engine::input::Key key) {
     using namespace engine::input;
     switch (key) {
@@ -62,7 +57,6 @@ int main(){
 	std::cout << "window started" << std::endl;
 
 
-	//auto renderer = render::create_vulkan_renderer();
 	auto renderer = render::create_software_renderer();
 
 	render::RenderInitInfo init_info;

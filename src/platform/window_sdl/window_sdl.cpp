@@ -7,10 +7,6 @@
 #include"platform/input_sdl/input_sdl.hpp"
 
 #include<SDL3/SDL.h>
-#ifdef ENGINE_ENABLE_VULKAN
-	#include<SDL3/SDL_vulkan.h>
-	#include<vulkan/vulkan.h>
-#endif // ENGINE_ENABLE_VULKAN
 
 namespace engine::window{
 
@@ -51,16 +47,11 @@ SDLWindow::~SDLWindow() {
 bool SDLWindow::init(const WindowDesc& desc) {
 	if(!SDL_Init(SDL_INIT_VIDEO | SDL_INIT_EVENTS)) return false;
 
-	Uint32 flags = SDL_WINDOW_RESIZABLE;
-	#ifdef ENGINE_ENABLE_VULKAN
-		flags |= SDL_WINDOW_VULKAN;
-	#endif
-
 	window_ = SDL_CreateWindow(
 		desc.title.c_str(),
 		desc.width,
 		desc.height,
-		flags
+		SDL_WINDOW_RESIZABLE
 	);
 
 	this->width_ = desc.width;
@@ -210,32 +201,30 @@ void* SDLWindow::native_handle() const{
 	return (void*)window_;
 }
 
-#ifdef ENGINE_ENABLE_VULKAN
-	std::vector<const char*> SDLWindow::get_vulkan_instance_extensions() const{
-		Uint32 count = 0;
-		const char* const* exts = SDL_Vulkan_GetInstanceExtensions(&count);
-
-		if(!exts) {
-			std::cerr << "SDL_Vulkan_GetInstanceExtensions returned null" << std::endl;
-			return {};
-		}
-		return std::vector<const char*>(exts, exts+count);
-	}
-
-	bool SDLWindow::create_vulkan_surface(
-			VkInstance instance,
-			VkSurfaceKHR* out_surface) const{
-		if(!out_surface || !window_) return false;
-		if(!SDL_Vulkan_CreateSurface(window_, instance, nullptr, out_surface)){
-			std::cerr << "SDL_Vulkan_CreateSurface failed: " << SDL_GetError() << std::endl;
-			return false;
-		}
-		return true;
-	}
-#endif // ENGINE_ENABLE_VULKAN
-
 void SDLWindow::present_pixels(const uint32_t* data){
-	
+	if(window_==nullptr || data==nullptr) return;
+
+	SDL_Surface* surface = SDL_GetWindowSurface(window_);
+	if(!surface) return;
+
+	if(SDL_LockSurface(surface)){
+		uint8_t* dst = static_cast<uint8_t*>(surface->pixels);
+		const size_t row_bytes = width_ * sizeof(uint8_t);
+
+		if(surface->pitch == static_cast<int>(row_bytes)){
+			std::memcpy(dst, data, row_bytes * height_);
+		}
+		else{
+			const uint8_t* src = reinterpret_cast<const uint8_t*>(data);
+			for(uint32_t y = 0; y < height_; ++y){
+				std::memcpy(dst + (y*surface->pitch), src + (y*row_bytes), row_bytes);
+			}
+		}
+
+		SDL_UnlockSurface(surface);
+	}
+
+	SDL_UpdateWindowSurface(window_);
 }
 
 } // namespace engine::window
