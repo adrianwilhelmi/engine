@@ -8,6 +8,8 @@
 #include<core/memory/linear_arena.hpp>
 #include<core/memory/pool_allocator.hpp>
 
+#include<core/frame/frame_buffer.hpp>
+
 #include<platform/window/window.hpp>
 #include<platform/window_sdl/window_sdl.hpp>
 #include<platform/input/input.hpp>
@@ -43,6 +45,9 @@ int main(){
 	desc.width = 1280;
 	desc.height = 720;
 
+	std::unique_ptr<engine::FrameBuffer> frame_buffer =
+		std::make_unique<engine::FrameBuffer>(desc.width, desc.height);
+
 	std::shared_ptr<engine::input::Input> input = 
 		std::make_shared<engine::input::SDLInput>();
 
@@ -53,21 +58,10 @@ int main(){
 		std::cerr << "failed to init window" << std::endl;
 		return -1;
 	}
-
 	std::cout << "window started" << std::endl;
 
 
 	auto renderer = render::create_software_renderer();
-
-	render::RenderInitInfo init_info;
-	init_info.window_handle = window;
-	init_info.width = 1280;
-	init_info.height = 720;
-
-	if(!renderer->init(init_info)){
-		return -1;
-	}
-
 	std::cout << "renderer started" << std::endl;
 
 	float prev_mouse_x = 0.0;
@@ -127,7 +121,8 @@ int main(){
 		prev_mouse_wheel_x = new_mouse_wheel_x;
 		prev_mouse_wheel_y = new_mouse_wheel_y;
 
-		renderer->render_frame();
+		renderer->render_frame(*frame_buffer);
+		window->draw_frame(frame_buffer->data());
     }
 
 	bool running = true;

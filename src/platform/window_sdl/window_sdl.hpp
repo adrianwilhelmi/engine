@@ -25,7 +25,7 @@ public:
 
 	void* native_handle() const override;
 
-	void present_pixels(const uint32_t* data);
+	void draw_frame(const uint32_t* data);
 
 private:
 	SDL_Window* window_ = nullptr;

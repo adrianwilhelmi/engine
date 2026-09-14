@@ -24,7 +24,7 @@ public:
 	virtual void* native_handle() const = 0;
 	virtual void swap_buffers() = 0;
 
-	virtual void present_pixels(const uint32_t* data) = 0;
+	virtual void draw_frame(const uint32_t* data) = 0;
 };
 
 } // namespace engine::window

@@ -201,7 +201,7 @@ void* SDLWindow::native_handle() const{
 	return (void*)window_;
 }
 
-void SDLWindow::present_pixels(const uint32_t* data){
+void SDLWindow::draw_frame(const uint32_t* data){
 	if(window_==nullptr || data==nullptr) return;
 
 	SDL_Surface* surface = SDL_GetWindowSurface(window_);
