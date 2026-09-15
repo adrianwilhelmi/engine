@@ -3,13 +3,13 @@
 #include<memory>
 
 #include<render/renderer.hpp>
-#include<core/frame/frame_buffer.hpp>
+#include<render/frame/frame_buffer.hpp>
 
-namespace render{
+namespace engine::render{
 
 class SoftwareRenderer : public Renderer{
 public:
-	void render_frame(engine::FrameBuffer& frame_buffer) override;
+	void render_frame(engine::render::FrameBuffer& frame_buffer) override;
 };
 
 } // namespace render

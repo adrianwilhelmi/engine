@@ -1,6 +1,6 @@
-#include<core/frame/frame_buffer.hpp>
+#include<render/frame/frame_buffer.hpp>
 
-namespace engine{
+namespace engine::render{
 
 FrameBuffer::FrameBuffer(uint32_t height, uint32_t width)
 	: height_(height), width_(width), data_(static_cast<std::size_t>(height) * width, 0) {}
@@ -27,4 +27,4 @@ uint32_t FrameBuffer::height() const noexcept {return this->height_;}
 uint32_t FrameBuffer::width() const noexcept {return this->width_;}
 std::size_t FrameBuffer::size() const noexcept {return this->height_*this->width_;}
 
-} // namespace engine
+} // namespace engine::render

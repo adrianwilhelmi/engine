@@ -4,18 +4,20 @@
 #include<cassert>
 #include<vector>
 
+
 #include<core/memory/default_heap.hpp>
 #include<core/memory/linear_arena.hpp>
 #include<core/memory/pool_allocator.hpp>
-
-#include<core/frame/frame_buffer.hpp>
 
 #include<platform/window/window.hpp>
 #include<platform/window_sdl/window_sdl.hpp>
 #include<platform/input/input.hpp>
 #include<platform/input_sdl/input_sdl.hpp>
 #include<platform/input/key_codes.hpp>
+
 #include<render/renderer.hpp>
+#include<render/frame/frame_buffer.hpp>
+
 
 #include<SDL3/SDL.h>
 
@@ -45,8 +47,8 @@ int main(){
 	desc.width = 1280;
 	desc.height = 720;
 
-	std::unique_ptr<engine::FrameBuffer> frame_buffer =
-		std::make_unique<engine::FrameBuffer>(desc.width, desc.height);
+	std::unique_ptr<engine::render::FrameBuffer> frame_buffer =
+		std::make_unique<engine::render::FrameBuffer>(desc.height, desc.width);
 
 	std::shared_ptr<engine::input::Input> input = 
 		std::make_shared<engine::input::SDLInput>();
@@ -61,7 +63,7 @@ int main(){
 	std::cout << "window started" << std::endl;
 
 
-	auto renderer = render::create_software_renderer();
+	auto renderer = engine::render::create_software_renderer();
 	std::cout << "renderer started" << std::endl;
 
 	float prev_mouse_x = 0.0;
@@ -73,6 +75,8 @@ int main(){
 	float prev_mouse_wheel_y = 0.0f;
 	float new_mouse_wheel_x = 0.0f;
 	float new_mouse_wheel_y = 0.0f;
+
+	std::cout << "SDL pixel format: " << window->get_pixel_format() << std::endl;
 
 	while (!window->should_close()) {
 		input->new_frame();

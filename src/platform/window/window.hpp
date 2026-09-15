@@ -25,6 +25,8 @@ public:
 	virtual void swap_buffers() = 0;
 
 	virtual void draw_frame(const uint32_t* data) = 0;
+
+	virtual uint32_t get_pixel_format() const = 0;
 };
 
 } // namespace engine::window

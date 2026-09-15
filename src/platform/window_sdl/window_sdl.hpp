@@ -27,6 +27,8 @@ public:
 
 	void draw_frame(const uint32_t* data);
 
+	uint32_t get_pixel_format() const override;
+
 private:
 	SDL_Window* window_ = nullptr;
 	uint32_t width_ = 0;

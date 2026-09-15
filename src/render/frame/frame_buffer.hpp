@@ -4,7 +4,7 @@
 #include<cstdint>
 #include<cstddef>
 
-namespace engine{
+namespace engine::render{
 
 class FrameBuffer{
 public:
@@ -28,4 +28,4 @@ private:
 	std::vector<uint32_t> data_;
 };
 
-} // namespace engine
+} // namespace engine::render

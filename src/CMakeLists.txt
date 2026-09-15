@@ -26,9 +26,10 @@ add_library(EngineCore STATIC
 	core/math/mat4.hpp
 
 
-	core/frame/frame_buffer.hpp
+	render/frame/frame_buffer.hpp
+	render/color.hpp
 
-	core/frame/frame_buffer.cpp
+	render/frame/frame_buffer.cpp
 
 
 	platform/window/window.hpp

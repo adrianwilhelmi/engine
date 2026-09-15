@@ -209,7 +209,7 @@ void SDLWindow::draw_frame(const uint32_t* data){
 
 	if(SDL_LockSurface(surface)){
 		uint8_t* dst = static_cast<uint8_t*>(surface->pixels);
-		const size_t row_bytes = width_ * sizeof(uint8_t);
+		const size_t row_bytes = width_ * sizeof(uint32_t);
 
 		if(surface->pitch == static_cast<int>(row_bytes)){
 			std::memcpy(dst, data, row_bytes * height_);
@@ -225,6 +225,11 @@ void SDLWindow::draw_frame(const uint32_t* data){
 	}
 
 	SDL_UpdateWindowSurface(window_);
+}
+
+uint32_t SDLWindow::get_pixel_format() const{
+	SDL_Surface* surface = SDL_GetWindowSurface(window_);
+	return(uint32_t(surface->format));
 }
 
 } // namespace engine::window

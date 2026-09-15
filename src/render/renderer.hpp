@@ -3,16 +3,15 @@
 #include<cstdint>
 #include<memory>
 
-#include<core/frame/frame_buffer.hpp>
+#include<render/frame/frame_buffer.hpp>
 
-namespace render{
+namespace engine::render{
 
 class Renderer{
 public:
-	virtual void render_frame(engine::FrameBuffer& frame_buffer) = 0;
+	virtual void render_frame(engine::render::FrameBuffer& frame_buffer) = 0;
 };
 
-std::unique_ptr<Renderer> create_vulkan_renderer();
 std::unique_ptr<Renderer> create_software_renderer();
 
-} // namespace render
+} // namespace engine::render
