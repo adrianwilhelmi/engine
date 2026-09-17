@@ -2,7 +2,7 @@
 
 namespace engine::render{
 
-FrameBuffer::FrameBuffer(uint32_t height, uint32_t width)
+FrameBuffer::FrameBuffer(uint32_t width, uint32_t height)
 	: height_(height), width_(width), data_(static_cast<std::size_t>(height) * width, 0) {}
 
 void FrameBuffer::resize(uint32_t height, uint32_t width){

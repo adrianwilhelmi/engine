@@ -17,6 +17,9 @@
 
 #include<render/renderer.hpp>
 #include<render/frame/frame_buffer.hpp>
+#include<render/render_object.hpp>
+#include<render/camera_data.hpp>
+#include<render/scene.hpp>
 
 
 #include<SDL3/SDL.h>
@@ -40,6 +43,39 @@ const char* key_to_name(engine::input::Key key) {
     }
 }
 
+engine::render::Scene create_test_scene(uint32_t width, uint32_t height){
+	engine::render::Scene scene;
+	engine::render::RenderObject robj;
+	engine::render::CameraData cam;
+
+	float fov_rad = 60.0f * (3.14f / 180.0f);
+	float tan_half_fov = std::tan(fov_rad /2.0f);
+	float aspect = static_cast<float>(width) / static_cast<float>(height);
+
+	float far_z = 100.0f;
+	float near_z = 0.1f;
+
+	cam.projection[0][0] = 1.0f / (aspect * tan_half_fov);
+	cam.projection[1][1] = 1.0f / tan_half_fov;
+	cam.projection[2][2] = -(far_z + near_z) / (far_z - near_z);
+	cam.projection[2][3] = -1.0f;
+	cam.projection[3][2] = -(2.0f * far_z * near_z) / (far_z - near_z);
+
+	float x = 0.0f;
+	float y = 0.0f;
+	float z = 2.0f;
+
+	cam.view[3][0] = -x;
+	cam.view[3][1] = -y;
+	cam.view[3][2] = -z;
+
+
+	scene.objects.push_back(robj);
+	scene.camera = cam;
+	
+	return scene;
+}
+
 int main(){
 
 	engine::window::WindowDesc desc;
@@ -48,7 +84,22 @@ int main(){
 	desc.height = 720;
 
 	std::unique_ptr<engine::render::FrameBuffer> frame_buffer =
-		std::make_unique<engine::render::FrameBuffer>(desc.height, desc.width);
+		std::make_unique<engine::render::FrameBuffer>(desc.width, desc.height);
+
+
+	engine::render::Scene scene = create_test_scene(desc.width, desc.height);
+
+	std::cout << "scene cam projection:" << std::endl;
+	std::cout << scene.camera.projection << std::endl;
+
+	std::cout << "scene cam view:" << std::endl;
+	std::cout << scene.camera.view << std::endl;
+
+	std::cout << "scene render object model:" << std::endl;
+	std::cout << scene.objects[0].model << std::endl;
+
+
+
 
 	std::shared_ptr<engine::input::Input> input = 
 		std::make_shared<engine::input::SDLInput>();
@@ -125,7 +176,7 @@ int main(){
 		prev_mouse_wheel_x = new_mouse_wheel_x;
 		prev_mouse_wheel_y = new_mouse_wheel_y;
 
-		renderer->render_frame(*frame_buffer);
+		renderer->render_frame(*frame_buffer, scene);
 		window->draw_frame(frame_buffer->data());
     }
 

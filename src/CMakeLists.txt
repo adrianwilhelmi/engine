@@ -1,10 +1,17 @@
-set(RENDER_SOURCES
+set(SOURCES_RENDER
 	render/software_renderer/renderer_software.hpp
+	render/frame/frame_buffer.hpp
+	render/color.hpp
+	render/render_object.hpp
+	render/camera_data.hpp
+
 	render/software_renderer/renderer_software.cpp
 	render/software_renderer/renderer_software_factory.cpp
+
+	render/frame/frame_buffer.cpp
 )
 
-add_library(EngineCore STATIC
+set(SOURCES_CORE
 	core/memory/allocator_handle.hpp
 	core/memory/allocator_utils.hpp
 	core/memory/default_heap.hpp
@@ -24,14 +31,9 @@ add_library(EngineCore STATIC
 	core/math/vec3packed.hpp
 	core/math/vec4.hpp
 	core/math/mat4.hpp
+)
 
-
-	render/frame/frame_buffer.hpp
-	render/color.hpp
-
-	render/frame/frame_buffer.cpp
-
-
+set(SOURCES_PLATFORM
 	platform/window/window.hpp
 	platform/window/window_desc.hpp
 	platform/window_sdl/window_sdl.hpp
@@ -41,9 +43,24 @@ add_library(EngineCore STATIC
 	platform/window_sdl/window_sdl.cpp
 	platform/window_sdl/window_sdl.cpp
 	platform/input_sdl/input_sdl.cpp
+)
 
+set(SOURCES_WORLD
+	world/world.hpp
 
-	${RENDER_SOURCES}
+	world/world.cpp
+)
+
+set(SORUCES_RESOURCE
+	resources/resource_manager.hpp
+	resources/mesh.hpp
+)
+
+add_library(EngineCore STATIC
+	${SOURCES_RENDER}
+	${SOURCES_CORE}
+	${SOURCES_PLATFORM}
+	${SOURCES_WORLD}
 )
 
 if(ENGINE_NO_SIMD)

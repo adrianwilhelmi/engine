@@ -8,7 +8,7 @@ namespace engine::render{
 
 class FrameBuffer{
 public:
-	FrameBuffer(uint32_t height, uint32_t width);
+	FrameBuffer(uint32_t width, uint32_t height);
 	~FrameBuffer() = default;
 
 	void resize(uint32_t height, uint32_t width);
