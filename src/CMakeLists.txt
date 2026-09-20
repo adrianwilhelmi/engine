@@ -27,6 +27,7 @@ set(SOURCES_CORE
 	core/memory/virtual_memory.cpp
 
 
+	core/math/vec2.hpp
 	core/math/vec3.hpp
 	core/math/vec3packed.hpp
 	core/math/vec4.hpp

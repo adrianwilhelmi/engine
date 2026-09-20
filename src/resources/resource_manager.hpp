@@ -1,6 +1,6 @@
 #pragma once
 
-namespace engine::rsrc{
+namespace engine::resource{
 
 class ResourceManager{
 };
