@@ -1,5 +1,6 @@
 #include<cmath>
 
+#include<core/math/vec2.hpp>
 #include<core/math/vec3.hpp>
 #include<core/math/vec3packed.hpp>
 #include<core/math/vec4.hpp>
@@ -15,6 +16,91 @@ TEST(SimdArch, PrintDetectedArchitecture){
 	std::cout << "[		] SIMD Backend: " << arch << std::endl;
 	SUCCEED();
 }
+
+TEST(Vec2Test, MemoryLayout){
+	EXPECT_EQ(sizeof(Vec2), 8);
+	EXPECT_EQ(alignof(Vec2), 8);
+
+	Vec2 v(1.0f, 2.0f);
+	EXPECT_FLOAT_EQ(v.x, 1.0f);
+	EXPECT_FLOAT_EQ(v.y, 2.0f);
+}
+
+TEST(Vec2Test, Arithmetic){
+	Vec2 a(1.0f, 2.0f);
+	Vec2 b(4.0f, 5.0f);
+
+	Vec2 sum = a+b;
+	EXPECT_FLOAT_EQ(sum.x,5.0f);
+	EXPECT_FLOAT_EQ(sum.y,7.0f);
+
+	Vec2 diff = a-b;
+	EXPECT_FLOAT_EQ(diff.x,-3.0f);
+	EXPECT_FLOAT_EQ(diff.y,-3.0f);
+
+	Vec2 scaled = a*2.0f;
+	EXPECT_FLOAT_EQ(scaled.x,2.0f);
+	EXPECT_FLOAT_EQ(scaled.y,4.0f);
+
+	Vec2 mul = a*b;
+	EXPECT_FLOAT_EQ(mul.x,4.0f);
+	EXPECT_FLOAT_EQ(mul.y,10.0f);
+}
+
+TEST(Vec2Test, DotProduct){
+	float ax = 0.5f;
+	float ay = 4.1f;
+
+	float bx = 44.0f;
+	float by = 2.3f;
+
+	Vec2 a(ax,ay);
+	Vec2 b(bx,by);
+
+	float dot = ax*bx + ay*by;
+
+	EXPECT_FLOAT_EQ(a.dot(b), dot);
+
+	Vec2 zone = Vec2{0.0f,1.0f};
+	Vec2 yone = Vec2{1.0f,0.0f};
+
+	EXPECT_FLOAT_EQ(zone.dot(yone), 0.0f);
+}
+
+TEST(Vec2Test, CrossProduct){
+	Vec2 right(1.0f, 0.0f);
+	Vec2 up(0.0f, 1.0f);
+
+	float forward = right.cross(up);
+
+	EXPECT_FLOAT_EQ(forward, 1.0f);
+
+	float back = up.cross(right);
+	EXPECT_FLOAT_EQ(back, -1.0f);
+}
+
+TEST(Vec2Test, Normalization){
+	Vec2 v(3.0f, 0.0f);
+	Vec2 n = v.normalized();
+
+	Vec2 res(1.0f,0.0f);
+
+	EXPECT_TRUE(n.is_close(res,1e-7f));
+}
+
+TEST(Vec2Test, Comparison){
+	Vec2 a(1.1f,2.2f);
+	Vec2 b(1.1f,2.2f);
+	Vec2 c(1.1f,2.3f);
+
+	EXPECT_TRUE(a == b);
+	EXPECT_TRUE(a != c);
+
+	Vec2 d(1.10001f, 2.2f);
+	EXPECT_TRUE(a.is_close(d,1e-4f));
+	EXPECT_FALSE(a.is_close(d,1e-6f));
+}
+
 
 TEST(Vec3Test, MemoryLayout){
 	EXPECT_EQ(sizeof(Vec3), 16);
