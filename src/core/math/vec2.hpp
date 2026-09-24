@@ -3,6 +3,7 @@
 #include<iostream>
 #include<iomanip>
 #include<cassert>
+#include<cmath>
 
 #include"simd_backend.hpp"
 #include"vec3packed.hpp"
@@ -41,7 +42,7 @@ struct alignas(8) Vec2{
 	}
 
 	FORCE_INLINE void set_y(const float val){
-		x = val;
+		y = val;
 	}
 
 	[[nodiscard]] FORCE_INLINE Vec2 operator+(const Vec2& other) const{
@@ -72,7 +73,6 @@ struct alignas(8) Vec2{
 		return Vec2(x/scalar, y/scalar);
 	}
 
-
 	FORCE_INLINE Vec2& operator+=(const Vec2& other){
 		x += other.x;
 		y += other.y;
@@ -96,6 +96,13 @@ struct alignas(8) Vec2{
 		y *= val;
 		return *this;
 	}
+
+	FORCE_INLINE Vec2& operator/=(const float val){
+		x /= val;
+		y /= val;
+		return *this;
+	}
+
 
 	FORCE_INLINE float operator[](int i) const {
 		assert(i < 2 && "index oob for Vec2");

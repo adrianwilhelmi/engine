@@ -1,0 +1,18 @@
+compiler:
+	input: katalog z assetami, uruchamia odpowiedni asset_compiler uzywajac registry
+	jesli asset juz skompilowany, ignrouj albo nadpisz..
+
+	output: katalog z ugotowanymi tempami w compiled/temp
+
+pak_builder:
+	input: katalog z ugotowanymi
+	output: .paki do czytania przez resource managera
+
+resource_manager:
+	input: asset_id
+	output: handle do danych
+
+
+
+ale jak resource manager to robi ?? hash mapa asset_id do PakEntry
+.. PakEntry zawiera info na temat offsetow itd

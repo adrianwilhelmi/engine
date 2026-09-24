@@ -1,9 +1,11 @@
-option(ENGINE_BUILD_TESTS "Build unit tests" ON)
+cmake_minimum_required(VERSION 3.25)
+
+project(Engine LANGUAGES CXX)
+
+option(ENGINE_BUILD_TESTS "Build unit tests" OFF)
 option(ENGINE_NO_SIMD "Force disable SIMD and use fallback" OFF)
 option(ENGINE_BUILD_BENCHMARKS "Build benchmarks" OFF)
-
-cmake_minimum_required(VERSION 3.25)
-project(Engine LANGUAGES CXX)
+option(ENGINE_BUILD_ASSET_TOOLS "Build asset compiler" OFF)
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -43,7 +45,7 @@ if(UNIX)
 			-g
 			-fno-omit-frame-pointer
 		)
-		add_link_options(engine_strict_flags INTERFACE
+		target_link_options(engine_strict_flags INTERFACE
 			-fsanitize=address
 		)
 	else()
@@ -54,6 +56,20 @@ endif()
 find_package(SDL3 REQUIRED)
 
 add_subdirectory(src)
+
+
+if(ENGINE_BUILD_ASSET_TOOLS)
+	include(FetchContent)
+
+	FetchContent_Declare(
+		fastgltf
+		URL https://github.com/spnda/fastgltf/archive/refs/tags/v0.9.0.tar.gz
+	)
+
+	FetchContent_MakeAvailable(fastgltf)
+
+	add_subdirectory(tools)
+endif()
 
 if(ENGINE_BUILD_TESTS)
 	message(STATUS "Tests are ENABLED.")

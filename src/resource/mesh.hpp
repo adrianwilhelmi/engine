@@ -38,7 +38,8 @@ namespace engine::resource{
  * */
 
 struct AABB{
-	engine::math::Vec3Packed bound[4];
+	engine::math::Vec3 min;
+	engine::math::Vec3 max;
 }
 
 struct SubMesh;
@@ -53,7 +54,8 @@ struct Mesh{
 
 	std::span<const SubMesh> submeshes;
 
-	AABB bounds;
+	engine::math::Vec3 AABB_min;
+	engine::math::Vec3 AABB_max;
 };
 
 } // engine::render

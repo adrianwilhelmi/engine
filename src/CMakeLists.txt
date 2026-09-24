@@ -53,8 +53,8 @@ set(SOURCES_WORLD
 )
 
 set(SORUCES_RESOURCE
-	resources/resource_manager.hpp
-	resources/mesh.hpp
+	resource/resource_manager.hpp
+	resource/mesh.hpp
 )
 
 add_library(EngineCore STATIC
