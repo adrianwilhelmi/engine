@@ -14,5 +14,5 @@ bench/quat_slerp/quat_a.txt
 bench/quat_slerp/quat_b.txt
 bench/quat_slerp/ts.txt
 
-tools/input/
-tools/compiled/
+tools/asset/input/
+tools/asset/compiled/

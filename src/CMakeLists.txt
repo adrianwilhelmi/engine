@@ -64,6 +64,12 @@ add_library(EngineCore STATIC
 	${SOURCES_WORLD}
 )
 
+add_library(EngineAssetFormat INTERFACE)
+
+target_include_directories(EngineAssetFormat INTERFACE
+	${CMAKE_CURRENT_SOURCE_DIR}
+)
+
 if(ENGINE_NO_SIMD)
 	target_compile_definitions(EngineCore PUBLIC FORCE_NO_SIMD)
 	message(STATUS "SIMD: Manually DISABLED (Fallback mode)")

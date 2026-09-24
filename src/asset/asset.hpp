@@ -1,18 +1,20 @@
 #pragma once
 
-namespace engine::utils::asset{
+#include<cstdint>
+
+namespace engine::asset{
 
 struct AssetId{
 	uint64_t value;
 };
 
-enum class AssetType{
+enum class AssetType : uint8_t{
 	Mesh,
 	Texture,
 	Material
 };
 
-struct MeshAsset{
+struct MeshFileHeader{
 	uint32_t asset_id;
 
 	uint32_t vertex_count;
@@ -30,4 +32,4 @@ struct MeshAsset{
 	// uint32_t index_type; uint32_t albo uint16_t
 };
 
-} // namespace engine::utils::assset
+} // namespace engine::resource
